@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "example": true,
+  "artifact_roots": [
+    ".ai/scratch",
+    "runs",
+    "results",
+    "plans",
+    "planning",
+    "planing"
+  ],
+  "protected_paths": [
+    "results/baseline",
+    "results/release",
+    "docs/decisions"
+  ],
+  "records": [
+    {
+      "id": "demo-old-plan",
+      "path": ".ai/scratch/demo-old-plan.md",
+      "kind": "plan",
+      "status": "superseded",
+      "owner": "REPLACE_WITH_REAL_OWNER",
+      "closed_at": "2026-01-01T00:00:00Z",
+      "expires_at": "2026-01-08T00:00:00Z",
+      "pinned": false,
+      "running": false,
+      "reproducible": true,
+      "depends_on": [],
+      "superseded_by": ".ai/state.md",
+      "reproduce_command": "EXAMPLE ONLY: replace with a verified reproduction recipe",
+      "reviewed_at": "2026-09-28T00:00:00Z",
+      "references_checked": false,
+      "content_sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "demo-baseline-log",
+      "path": "results/baseline/demo-eval.json",
+      "kind": "evidence",
+      "status": "closed",
+      "owner": "REPLACE_WITH_REAL_OWNER",
+      "expires_at": null,
+      "pinned": true,
+      "running": false,
+      "reproducible": false,
+      "depends_on": []
+    }
+  ]
+}

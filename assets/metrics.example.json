@@ -1,0 +1,193 @@
+{
+  "schema_version": 1,
+  "example": true,
+  "min_pairs": 5,
+  "baseline": {
+    "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "dataset": "sha256:demo-dataset-not-real",
+    "split": "sha256:demo-heldout-not-real",
+    "protocol": "sha256:demo-protocol-not-real",
+    "environment": "sha256:demo-environment-not-real",
+    "hardware": "synthetic-device",
+    "precision": "fp32",
+    "batch_size": 1,
+    "seeds": [
+      11,
+      22,
+      33,
+      44,
+      55
+    ],
+    "metrics": {
+      "latency_ms": {
+        "unit": "ms",
+        "values": [
+          100,
+          102,
+          98,
+          101,
+          99
+        ]
+      },
+      "error_pct": {
+        "unit": "percent",
+        "values": [
+          2,
+          2.1,
+          1.9,
+          2,
+          2
+        ]
+      }
+    },
+    "training_budget": "EXAMPLE: same 1000 steps",
+    "measurement": "EXAMPLE: warmup 10; sync device; exclude I/O; fixed harness",
+    "pairing_unit": "independent-seed",
+    "config_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+    "dirty_patch_sha256": null,
+    "command": "EXAMPLE ONLY: not executable",
+    "raw_results": "fixture://synthetic/baseline"
+  },
+  "candidate": {
+    "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "dataset": "sha256:demo-dataset-not-real",
+    "split": "sha256:demo-heldout-not-real",
+    "protocol": "sha256:demo-protocol-not-real",
+    "environment": "sha256:demo-environment-not-real",
+    "hardware": "synthetic-device",
+    "precision": "fp32",
+    "batch_size": 1,
+    "seeds": [
+      11,
+      22,
+      33,
+      44,
+      55
+    ],
+    "metrics": {
+      "latency_ms": {
+        "unit": "ms",
+        "values": [
+          90,
+          91,
+          89,
+          90,
+          90
+        ]
+      },
+      "error_pct": {
+        "unit": "percent",
+        "values": [
+          2,
+          2.1,
+          1.9,
+          2,
+          2
+        ]
+      }
+    },
+    "training_budget": "EXAMPLE: same 1000 steps",
+    "measurement": "EXAMPLE: warmup 10; sync device; exclude I/O; fixed harness",
+    "pairing_unit": "independent-seed",
+    "config_sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+    "dirty_patch_sha256": null,
+    "command": "EXAMPLE ONLY: not executable",
+    "raw_results": "fixture://synthetic/candidate"
+  },
+  "gates": {
+    "latency_ms": {
+      "direction": "lower",
+      "max_regression_pct": 0,
+      "min_improvement_pct": 5,
+      "require_each_pair": true
+    },
+    "error_pct": {
+      "direction": "lower",
+      "max_regression_abs": 0,
+      "require_each_pair": true
+    }
+  },
+  "changes": [
+    {
+      "id": "vectorize",
+      "kind": "runtime",
+      "files": [
+        "model.py"
+      ],
+      "hypothesis": "EXAMPLE: remove interpreter overhead without changing outputs",
+      "invariants": [
+        "EXAMPLE: identical shape and agreed numerical tolerance"
+      ],
+      "tests": [
+        {
+          "command": "EXAMPLE ONLY: not executable",
+          "status": "not_run",
+          "evidence": "fixture://synthetic/test"
+        }
+      ],
+      "rollback": "EXAMPLE: disable the vectorized implementation",
+      "depends_on": []
+    },
+    {
+      "id": "cache",
+      "kind": "runtime",
+      "files": [
+        "model.py"
+      ],
+      "hypothesis": "EXAMPLE: cache immutable intermediates",
+      "invariants": [
+        "EXAMPLE: invalidation includes all input-dependent state"
+      ],
+      "tests": [
+        {
+          "command": "EXAMPLE ONLY: not executable",
+          "status": "not_run",
+          "evidence": "fixture://synthetic/cache-test"
+        }
+      ],
+      "rollback": "EXAMPLE: disable the cache",
+      "depends_on": [
+        "vectorize"
+      ]
+    }
+  ],
+  "required_interactions": [
+    [
+      "vectorize",
+      "cache"
+    ]
+  ],
+  "ablations": [
+    {
+      "factors": [],
+      "status": "not_run",
+      "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "evidence": "fixture://synthetic/ablation"
+    },
+    {
+      "factors": [
+        "vectorize"
+      ],
+      "status": "not_run",
+      "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "evidence": "fixture://synthetic/ablation"
+    },
+    {
+      "factors": [
+        "cache"
+      ],
+      "status": "not_run",
+      "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "evidence": "fixture://synthetic/ablation"
+    },
+    {
+      "factors": [
+        "vectorize",
+        "cache"
+      ],
+      "status": "not_run",
+      "commit": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "evidence": "fixture://synthetic/ablation"
+    }
+  ]
+}
