@@ -1,72 +1,145 @@
 # AI Dev Steward
 
-面向 AI 辅助算法开发的 Agent Skill：收敛 planning/planing 等重复计划，审计过期实验产物，把多项算法优化变成可定位、可验证、可回滚的审查单元。
+**English** | [简体中文](README.zh-CN.md)
 
-**v1.1.0 · Python 3.10+ · Git · 无第三方 Python 依赖 · 默认只读**
+**Less clutter. Traceable experiments. Reviewable optimizations.**
 
-## 核心原则
+AI Dev Steward is an Agent Skill for keeping AI-assisted algorithm development lean, reproducible, and reviewable. It helps consolidate redundant planning files, audit stale experimental artifacts, and organize complex optimization branches into changes that reviewers can trace to tests, measurements, ablations, and rollback steps.
 
-不要为了治理残留再制造更多文件。优先复用现有 Issue、PR、实验平台；没有等价入口时，最多维护一个 `.ai/state.md` 和一个 `.ai/artifacts.json`。不按文件名、mtime、Git 忽略状态或重复哈希决定删除。
+The skill combines a development workflow with four read-only Python tools. It favors existing issues, pull requests, and experiment trackers over new administrative files, and treats cleanup candidates and performance claims as evidence to review—not permission to delete or merge.
 
-本工具没有删除、移动、自动训练或自动合并功能。隔离候选不是删除许可；数值门槛通过不是算法正确性证明。运行记录、账本和审查映射都是输入者声明，仍须独立核对。
+**v1.1.0 · Python 3.10+ · Git · No third-party Python dependencies · Read-only tools**
 
-## 目录
+## Why this skill exists
 
-| 路径 | 用途 |
+AI-assisted development can leave behind overlapping plans, forgotten logs, intermediate datasets, and experimental outputs. Meanwhile, a single optimization branch may mix refactoring, algorithm changes, precision adjustments, and caching, making it difficult to tell what changed, which experiment measured it, or how to undo it.
+
+AI Dev Steward addresses both problems without creating another layer of planning clutter.
+
+| Problem | Approach |
 | --- | --- |
-| `SKILL.md` | Agent 入口、模式选择、停止条件与交付要求 |
-| `scripts/steward.py` | 只读审计、差异盘点、指标门槛与审查包 |
-| `tests/` | 临时 Git 仓库和合成指标的回归测试 |
-| `references/playbook.md` | 生命周期、安全边界、实验归因和格式说明 |
-| `assets/ledger.example.json` | 产物账本示例，不能当作真实登记 |
-| `assets/metrics.example.json` | 指标、逻辑改动、消融示例，不能当作实测 |
-| `CHANGELOG.md` | 版本变更和迁移说明 |
+| Duplicate `planning`, `planing`, and versioned plan files | Keep one active plan per task. Preserve unique decisions and acceptance criteria before consolidating old documents. Filename matches are review hints, not proof of duplication. |
+| Stale or unowned experiment artifacts | Inventory files and check lifecycle records, ownership, expiry, reproducibility, content hashes, and declared dependencies before identifying quarantine candidates. |
+| Cleanup that could damage reproducibility | Retain unknown or protected artifacts and their transitive dependencies. Require explicit, path-level approval and a verified recovery procedure for manual quarantine. |
+| Large, mixed-purpose optimization branches | Map logical changes to files, invariants, tests, experiments, and rollback steps; suggest a dependency-aware reading order. |
+| Performance improvements without clear attribution | Check paired metrics, comparison conditions, provenance fields, and declared ablation coverage; make missing evidence explicit. |
 
-## 安装与使用
+## Quick start
 
-把整个仓库放入宿主支持的技能目录，并保持目录名为 `ai-dev-steward`。以下以支持 `.agents/skills` 的宿主为例；其他宿主按各自发现规则配置，不重复安装多份活跃副本。
+### Install
+
+Place the complete repository in your agent host's supported skill directory and keep the directory name `ai-dev-steward`. For a host that discovers skills under `.agents/skills`, run this from the project root:
 
 ```sh
 git clone https://github.com/Afloat16/ai-dev-steward.git .agents/skills/ai-dev-steward
 ```
 
-也可以放在独立目录，在对话中明确要求读取其中的 `SKILL.md`。不宣称所有客户端均已实测。
+Alternatively, clone it into a separate directory and explicitly ask your agent to read its `SKILL.md`. Follow your host's discovery rules and avoid multiple active copies. Compatibility with every client has not been tested.
 
-从待审计项目的根目录运行：
+### Ask your agent
+
+**For artifact hygiene:**
+
+> Use ai-dev-steward to audit old plans, logs, and intermediate experiment artifacts in this project. Work read-only, distinguish retained items from review-needed items and quarantine candidates, and explain the reason for each decision. Do not create new planning files.
+
+**For optimization review:**
+
+> Use ai-dev-steward to review the current optimization branch. Pin the baseline and candidate commits, separate refactoring, algorithm, precision, and caching changes, and identify gaps in tests, ablations, and rollback steps. Put the review in the existing pull request and do not rewrite branch history.
+
+### Run the tools directly
+
+Run these commands from the project you want to inspect. Set `SKILL` to your actual installation path.
 
 ```sh
 SKILL=.agents/skills/ai-dev-steward
 
-# 没有账本时只盘点；不会创建治理文件。
+# Inventory artifacts. No ledger is required; no governance files are created.
 python -B "$SKILL/scripts/steward.py" audit --root .
 
-# 盘点分支已提交差异，并单独列出未提交工作。
+# Inspect committed branch changes and separately report uncommitted work.
 python -B "$SKILL/scripts/steward.py" diff --root . --base main --head HEAD
 
-# 使用可信评测流程产生的真实数据，不使用示例冒充实测。
+# Check real measurements produced by your trusted evaluation workflow.
 python -B "$SKILL/scripts/steward.py" gate --input /path/to/actual-evidence.json
 
-# 在同一份证据中补充 changes/ablations，输出可粘贴到 PR 的审查包。
+# Use the same evidence file, including changes and ablations, for a PR-ready report.
 python -B "$SKILL/scripts/steward.py" review --root . --base main --head HEAD \
   --input /path/to/actual-evidence.json --format markdown
+```
 
+`/path/to/actual-evidence.json` is a placeholder for your real evaluation record, not a bundled file. Replace `main` with the appropriate baseline ref or fixed commit SHA. If the baseline already contains the candidate changes, choose an earlier baseline or a feature-branch comparison instead.
+
+Output goes to the terminal by default. Save it only to an approved, existing destination when needed; do not create timestamped report copies or commit sensitive raw logs.
+
+## Four tools, one evidence trail
+
+| Command | What it checks or produces |
+| --- | --- |
+| `audit` | Read-only artifact inventory, retention reasons, planning-file review hints, and evidence-qualified quarantine candidates. Without a ledger, it inventories rather than authorizing cleanup. Use repeated `--scope` arguments to limit discovery in large projects. |
+| `diff` | Pinned commit SHAs, an inventory of committed changes from merge-base to head, and a separate working-tree status. Uncommitted and ignored content is outside the committed comparison. |
+| `gate` | Paired metrics, units, sample counts, comparison conditions, provenance fields, and both mean and per-pair regression limits. Missing evidence is not silently treated as a pass. |
+| `review` | Commit alignment, changed-file coverage, logical dependencies, test and rollback declarations, and declared ablation coverage. Outputs JSON or a Markdown review packet for an existing PR. |
+
+The tools inspect supplied records; they do not run experiments, execute commands from evidence files, or independently authenticate results.
+
+## Workflow principles
+
+### Reuse existing sources of truth
+
+Prefer your existing issue, PR, or experiment tracker. Only when there is no equivalent and persistent state is necessary should you maintain at most one `.ai/state.md` and one `.ai/artifacts.json`. Small changes and ordinary questions do not require a ledger or experiment matrix.
+
+### Retain first; quarantine only with evidence and approval
+
+File age, name, Git ignore status, and duplicate hashes are not sufficient reasons to delete anything. Unknown artifacts stay retained.
+
+Quarantine candidacy requires an eligible path and regenerable artifact type, a closed and expired record, no active or pinned use, no Git tracking or retained dependents, and a regular file with a single hard link. It also requires closure metadata, a reproduction method, a reference-review declaration no more than seven days old, and a SHA-256 matching the current content. The seven-day window is a conservative convention of this tool, not an external standard.
+
+A candidate is not deletion authorization. Manual quarantine requires a fresh check, exact-path approval, and a verified recovery procedure. Final deletion requires a separate approval. Moving a file into quarantine does not itself free disk space.
+
+### Bind optimization claims to the measured change
+
+Freeze the baseline, candidate, configuration and dirty-patch hashes, dataset and split fingerprints, evaluation protocol, environment, hardware, precision, batch size, training budget, pairing units, seeds, measurement procedure, and raw-result pointers.
+
+For two independent optimization factors, review baseline, A, B, and A+B evidence. For larger changes, require the baseline, each factor in isolation, the full combination, and declared high-risk interactions rather than automatically demanding every possible combination. When factors cannot run independently, document their dependencies and attribution limits instead of inventing isolated results.
+
+If hardware, precision, or another comparison condition is itself the intervention, the automatic gate may report the runs as incomparable. Design a controlled comparison; do not change metadata to bypass the check.
+
+## Safety and limitations
+
+**There are no automatic delete, move, training, or merge commands.** The skill also prohibits unauthorized stashing, resets, force pushes, history rewrites, and overwriting uncommitted work.
+
+Source code, raw data, baseline and release models or evidence, active runs, Git-tracked files, and retained dependencies must be protected. Submodules, nested repositories, symbolic links, and hard-linked files are not ordinary cleanup targets.
+
+Ledger records, reference checks, test results, and experiment pointers are declarations, not independently verified facts. A ledger cannot discover every dynamic reference, remote training job, or object-storage consumer. The tools are not a security sandbox for a hostile, concurrently changing filesystem; actual quarantine requires stopping writes and revalidating paths, content, and consumers.
+
+**`CHECKS_PASS` means the supplied structure and numeric checks passed.** It does not establish experiment authenticity, algorithmic correctness, statistical significance, isolated gains, or causation, and it does not approve a merge. Correctness tests, slice regressions, uncertainty analysis, and human review remain necessary.
+
+## Repository guide
+
+| Path | Purpose |
+| --- | --- |
+| [SKILL.md](SKILL.md) | Agent entry point, mode selection, stop conditions, and delivery requirements. |
+| [scripts/steward.py](scripts/steward.py) | The four read-only command-line tools. |
+| [tests/](tests/) | Regression and package tests using temporary Git repositories and synthetic metrics. |
+| [references/playbook.md](references/playbook.md) | Lifecycle rules, safety boundaries, experiment attribution, data formats, and exit codes. |
+| [assets/ledger.example.json](assets/ledger.example.json) | Example artifact ledger; not a real project registry. |
+| [assets/metrics.example.json](assets/metrics.example.json) | Example metrics, logical changes, and ablations; not measured results. |
+| [CHANGELOG.md](CHANGELOG.md) | Version history and migration notes. |
+| [README.zh-CN.md](README.zh-CN.md) | Chinese introduction and usage guide. |
+
+English is the primary language of the repository introduction. The detailed `SKILL.md`, playbook, and changelog currently remain in Chinese; this README update does not translate the entire skill package.
+
+## Tests and migration
+
+Run the included test suite:
+
+```sh
+SKILL=.agents/skills/ai-dev-steward
 python -B -m unittest discover -s "$SKILL/tests" -v
 ```
 
-输出默认到终端，不自动落盘。需要保存时复用一个已批准的位置，不生成时间戳副本或提交原始敏感日志。
+Tests use synthetic data and temporary repositories. They do not demonstrate real model acceleration, real project cleanup, or validation on every operating system or agent host.
 
-## 适合怎样提问
+The example metrics intentionally return `EXAMPLE_ONLY` and a nonzero exit code. Never present the examples as measured evidence.
 
-> 使用 ai-dev-steward 审计项目中的旧计划、日志和实验中间产物。只读，区分保留、待确认和隔离候选，解释每项理由。
-
-> 使用 ai-dev-steward 审查当前优化分支。固定基线，分别追踪重构、算法、精度和缓存改动，指出测试、消融和回滚缺口，不重写分支历史。
-
-## 安全与适用范围
-
-保护源码、原始数据、模型、基线/发布证据、运行中的任务、Git 跟踪文件及保留节点的传递依赖。跨仓库、子模块、符号链接和硬链接不得作为普通清理目标。未登记、证据过期、哈希不符、示例输入或无法核对引用时均不产生可执行清理授权。
-
-账本只表达已知依赖，不能发现全部动态引用、远程训练任务或对象存储消费者。工具不是恶意并发文件系统的安全沙箱；实际隔离必须停写、重新核验、逐路径审批，并验证恢复。
-
-指标比较要求同条件配对；硬件、精度等本身是实验变量时，保留不可比结论并人工设计受控对比，不伪造相同元数据。大型优化不强制执行指数级全部组合，但必须公开缺失的单项和高风险交互证据。
-
-退出码及 v1.0 账本迁移要求见 `references/playbook.md` 和 `CHANGELOG.md`。示例指标有意返回 `EXAMPLE_ONLY` 和非零退出码。测试使用合成数据，不代表真实模型加速、真实项目清理或跨平台验证。
+Older v1.0 ledgers remain readable, but entries missing the additional review evidence stay `KEEP`. Incomplete experiment provenance is reported rather than silently accepted. See the [playbook](references/playbook.md) and [changelog](CHANGELOG.md) for the format and migration requirements.
