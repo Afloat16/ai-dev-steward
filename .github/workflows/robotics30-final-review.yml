@@ -1,0 +1,159 @@
+name: Review public contribution policies and duplicates
+on:
+  push:
+    branches: [contrib/robotics30-20260928]
+    paths: [.github/workflows/robotics30-final-review.yml]
+permissions:
+  contents: read
+  actions: read
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: robotics30-public-source-expanded
+          path: snapshot
+          repository: Afloat16/ai-dev-steward
+          run-id: 36431026214
+          github-token: ${{ github.token }}
+      - name: Read public policy files and existing issues without publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python3 - <<'PY'
+          import concurrent.futures as cf
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import re
+          import time
+          import urllib.parse
+          import urllib.request
+
+          root = pathlib.Path('snapshot')
+          out = pathlib.Path('final-review')
+          out.mkdir()
+          queries = {
+              'ARISE-Initiative/robosuite': ['RingBuffer', 'buffer failed'],
+              'graphdeco-inria/gaussian-splatting': ['searchForMaxIteration', 'checkpoint directory'],
+              'naver/mast3r': ['mkdir_for'],
+              'nerfstudio-project/gsplat': ['save_ply colors'],
+              'mani-skill/ManiSkill': ['rotation_between_vec'],
+              'real-stanford/diffusion_policy': ['drive_to_waypoint'],
+              'danijar/dreamerv3': ['Recency'],
+              'eloialonso/diamond': ['extract_state_dict'],
+              'microsoft/MoGe': ['write_depth', 'BytesIO'],
+              'cvg/Hierarchical-Localization': ['read_images_text', 'filename spaces'],
+              'facebookresearch/map-anything': ['read_images_text', 'filename spaces'],
+              'hustvl/4DGaussians': ['read_images_text', 'filename spaces'],
+              'nerfstudio-project/nerfstudio': ['read_images_text', 'filename spaces'],
+              'Physical-Intelligence/openpi': ['resize aspect'],
+              'cvg/LightGlue': ['resize zero'],
+              'ARISE-Initiative/robomimic': ['pad_sequence'],
+              'naver/dust3r': ['ret_factor'],
+              'NVlabs/instant-ngp': ['colmap2nerf spaces', 'images.txt empty'],
+              'AtsushiSakai/PythonRobotics': ['spline duplicate'],
+              'galilai-group/stable-worldmodel': ['pretraining arguments'],
+              'ashawkey/torch-ngp': ['patch_size randint', 'patch boundary'],
+              'tonyzhaozh/act': ['normalization test'],
+              'yenchenlin/nerf-pytorch': ['sample_pdf test'],
+              'facebookresearch/vggt': ['quaternion test'],
+              'Robbyant/lingbot-world': ['camera geometry test'],
+              'NVlabs/neuralangelo': ['camera pose test'],
+              'SkyworkAI/Matrix-Game': ['generate_points_in_sphere'],
+              'Tencent-Hunyuan/HunyuanWorld-1.0': ['Perspective test'],
+              'openvla/openvla': ['ActionTokenizer test'],
+              'ashawkey/stable-dreamfusion': ['get_rays test'],
+          }
+          def request(url, authenticated=False):
+              headers = {'User-Agent': 'public-contribution-review'}
+              if authenticated:
+                  assert urllib.parse.urlparse(url).netloc == 'api.github.com'
+                  headers['Authorization'] = 'Bearer ' + os.environ['GH_TOKEN']
+                  headers['Accept'] = 'application/vnd.github+json'
+              with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as response:
+                  return response.read(5000001)
+          def save(path, value):
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
+          records = {x.get('full_name'): x for x in json.loads((root / 'repositories.json').read_text())}
+          tasks, policy_index = [], []
+          excluded = {'third_party', 'thirdparty', '3rdparty', 'vendor', 'external', 'dependencies', 'submodules', '.git'}
+          for repo in queries:
+              record = records[repo]
+              tree = json.loads((root / 'repositories' / repo / '_tree.json').read_text())
+              paths = []
+              for entry in tree['tree']:
+                  path = pathlib.PurePosixPath(entry['path'])
+                  if entry['type'] != 'blob' or entry.get('mode') == '120000' or entry.get('size', 0) > 250000:
+                      continue
+                  if path.is_absolute() or '..' in path.parts or any(p.lower() in excluded for p in path.parts):
+                      continue
+                  name = path.name.lower()
+                  is_text = path.suffix.lower() in ('.md', '.rst', '.txt', '.yml', '.yaml')
+                  selected = is_text and (len(path.parts) == 1 or name.startswith('readme') or 'contribut' in name or 'policy' in name or path.parts[0] == '.github')
+                  if selected:
+                      paths.append({'path': entry['path'], 'sha': entry['sha']})
+                      tasks.append((repo, record['commit_sha'], entry))
+              policy_index.append({'repository': repo, 'commit_sha': record['commit_sha'], 'tree_truncated': tree.get('truncated', False), 'selected_policy_and_readme_paths': paths})
+          save(out / 'policy-index.json', policy_index)
+          def download(task):
+              repo, commit, entry = task
+              result = {'repository': repo, 'commit_sha': commit, 'path': entry['path'], 'blob_sha': entry['sha']}
+              try:
+                  existing = root / 'repositories' / repo / 'files' / entry['path']
+                  data = existing.read_bytes() if existing.exists() else request('https://raw.githubusercontent.com/' + repo + '/' + commit + '/' + urllib.parse.quote(entry['path'], safe='/'))
+                  actual = hashlib.sha1(b'blob ' + str(len(data)).encode() + b'\0' + data).hexdigest()
+                  assert actual == entry['sha'], 'Git blob SHA mismatch'
+                  data.decode('utf-8')
+                  target = out / 'policies' / repo / entry['path']
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(data)
+                  result['status'] = 'verified'
+              except Exception as error:
+                  result.update(status='read_error', error=str(error))
+              return result
+          with cf.ThreadPoolExecutor(max_workers=6) as pool:
+              downloads = list(pool.map(download, tasks))
+          save(out / 'policy-file-results.json', downloads)
+          matches = []
+          pattern = re.compile(r'\b(ai|llms?|copilot|chatgpt|claude|automated|generated|assistance|disclos\w*|authorship)\b|披露|声明.{0,10}AI|AI.{0,10}辅助', re.I)
+          for item in downloads:
+              if item['status'] == 'verified':
+                  text = (out / 'policies' / item['repository'] / item['path']).read_text()
+                  for i, line in enumerate(text.splitlines(), 1):
+                      if pattern.search(line):
+                          matches.append({'repository': item['repository'], 'path': item['path'], 'line': i, 'text': line})
+          save(out / 'policy-language-matches.json', matches)
+          # Copy public organization defaults already read in the pinned snapshot.
+          import shutil
+          shutil.copytree(root / 'owner-defaults', out / 'owner-defaults')
+          shutil.copy2(root / 'owner-defaults.json', out / 'owner-defaults.json')
+          searches = []
+          for repo, terms in queries.items():
+              for term in terms:
+                  query = 'repo:' + repo + ' ' + term
+                  result = {'repository': repo, 'query': query, 'checked_at_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
+                  try:
+                      url = 'https://api.github.com/search/issues?' + urllib.parse.urlencode({'q': query, 'per_page': 10, 'sort': 'updated', 'order': 'desc'})
+                      response = json.loads(request(url, True))
+                      result.update(status='ok', total_count=response['total_count'], incomplete_results=response.get('incomplete_results', False), items=response['items'])
+                  except Exception as error:
+                      result.update(status='read_error', error=str(error))
+                  searches.append(result)
+                  save(out / 'duplicate-searches.json', searches)
+                  print(repo, term, result['status'], result.get('total_count'), flush=True)
+                  time.sleep(2.3)
+          save(out / 'summary.json', {'repositories': len(queries), 'policy_files': len(downloads), 'policy_read_errors': sum(x['status'] != 'verified' for x in downloads), 'searches': len(searches), 'search_read_errors': sum(x['status'] != 'ok' for x in searches), 'published_upstream_issues_or_prs': False, 'executed_upstream_code': False})
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: robotics30-final-review
+          path: final-review/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
