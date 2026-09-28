@@ -1,0 +1,235 @@
+name: Public contribution source snapshot
+
+on:
+  push:
+    branches: [contrib/robotics30-20260928]
+    paths: [.github/workflows/robotics30-snapshot.yml]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: robotics30-public-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Read public repositories without executing upstream code
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          timeout 600 python3 - <<'PY'
+          import concurrent.futures as cf
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import re
+          import time
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+
+          OUT = pathlib.Path('public-snapshot')
+          OUT.mkdir()
+          REPOS = '''AtsushiSakai/PythonRobotics
+          petercorke/robotics-toolbox-python
+          ARISE-Initiative/robosuite
+          ARISE-Initiative/robomimic
+          mani-skill/ManiSkill
+          real-stanford/diffusion_policy
+          tonyzhaozh/act
+          robocasa/robocasa
+          openvla/openvla
+          Physical-Intelligence/openpi
+          colmap/colmap
+          isl-org/Open3D
+          nerfstudio-project/nerfstudio
+          nerfstudio-project/gsplat
+          graphdeco-inria/gaussian-splatting
+          naver/dust3r
+          naver/mast3r
+          facebookresearch/vggt
+          cvg/LightGlue
+          cvg/Hierarchical-Localization
+          princeton-vl/DROID-SLAM
+          yenchenlin/nerf-pytorch
+          NVlabs/instant-ngp
+          NVlabs/neuralangelo
+          danijar/dreamerv3
+          nicklashansen/tdmpc2
+          eloialonso/diamond
+          Robbyant/lingbot-world
+          SkyworkAI/Matrix-Game
+          Tencent-Hunyuan/HunyuanWorld-1.0
+          microsoft/MoGe
+          facebookresearch/map-anything
+          mikedh/trimesh
+          threestudio-project/threestudio
+          ashawkey/stable-dreamfusion
+          ashawkey/torch-ngp
+          ashawkey/dreamgaussian
+          hustvl/4DGaussians
+          nv-tlabs/3dgrut
+          facebookresearch/pytorch3d
+          facebookresearch/habitat-lab
+          facebookresearch/habitat-sim
+          google-deepmind/mujoco
+          bulletphysics/bullet3
+          kornia/kornia
+          NVIDIA/warp
+          NVIDIA/cosmos
+          facebookresearch/vjepa2
+          Tencent-Hunyuan/HY-WorldPlay
+          nv-tlabs/lyra
+          galilai-group/stable-worldmodel
+          LargeWorldModel/LWM
+          open-gigaai/giga-world-0'''.split()
+
+          def request(url, authenticated=False):
+              headers = {'User-Agent': 'public-contribution-source-audit'}
+              if authenticated:
+                  if urllib.parse.urlparse(url).netloc != 'api.github.com':
+                      raise ValueError('Authenticated requests are restricted to api.github.com')
+                  headers['Authorization'] = 'Bearer ' + os.environ['GH_TOKEN']
+                  headers['Accept'] = 'application/vnd.github+json'
+              for attempt in range(3):
+                  try:
+                      with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=30) as response:
+                          return response.read(20_000_001)
+                  except urllib.error.HTTPError as error:
+                      if error.code not in (429, 500, 502, 503, 504) or attempt == 2:
+                          raise
+                      time.sleep(2 ** attempt)
+
+          def api(suffix):
+              return json.loads(request('https://api.github.com/' + suffix, True))
+
+          def put_json(path, value):
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + '\n')
+
+          def safe_path(value):
+              p = pathlib.PurePosixPath(value)
+              if p.is_absolute() or '..' in p.parts:
+                  raise ValueError('Unsafe repository path')
+              return p
+
+          def policy_path(path):
+              low = path.lower()
+              name = pathlib.PurePosixPath(low).name
+              return (name.startswith(('contribut', 'license', 'copying', 'notice', 'code_of_conduct', 'ai_policy', 'ai-policy', 'agents', 'cla.'))
+                      or 'how_to_contribut' in low or 'how-to-contribut' in low
+                      or 'pull_request_template' in low or 'issue_template' in low
+                      or (name.startswith('readme') and len(pathlib.PurePosixPath(path).parts) == 1)
+                      or ('contributing' in low and low.endswith(('.md', '.rst', '.txt'))))
+
+          def source_score(path):
+              low = path.lower()
+              parts = pathlib.PurePosixPath(low).parts
+              if not low.endswith('.py') or any(p in ('third_party', 'thirdparty', 'vendor', 'submodules', '.git', 'assets') for p in parts):
+                  return -1
+              score = 0
+              if any(p in ('utils', 'util', 'common', 'tools', 'data_readers') for p in parts):
+                  score += 50
+              if parts[-1] in ('utils.py', 'math.py', 'io.py', 'common.py', 'geometry.py', 'transforms.py', 'rotation.py', 'buffers.py'):
+                  score += 80
+              if len(parts) == 1:
+                  score += 20
+              if 'test' in low:
+                  score -= 30
+              return score - len(parts)
+
+          records, tasks, owners = [], [], set()
+          def inspect(repo, owner_defaults=False):
+              record = {'requested_repository': repo, 'owner_defaults': owner_defaults, 'checked_at_utc': time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}
+              try:
+                  meta = api('repos/' + repo)
+                  if meta.get('private'):
+                      record['status'] = 'private_skipped'
+                      return record
+                  canonical = meta['full_name']
+                  record.update({k: meta.get(k) for k in ('full_name', 'description', 'stargazers_count', 'default_branch', 'archived', 'pushed_at', 'html_url', 'license')})
+                  if not owner_defaults and (meta['archived'] or meta['stargazers_count'] < 1000):
+                      record['status'] = 'archived_or_below_1000_stars'
+                      return record
+                  ref = api('repos/' + canonical + '/git/ref/heads/' + urllib.parse.quote(meta['default_branch'], safe=''))
+                  sha = ref['object']['sha']
+                  tree = api('repos/' + canonical + '/git/trees/' + sha + '?recursive=1')
+                  record.update(commit_sha=sha, tree_truncated=tree.get('truncated', False), status='inspected')
+                  prefix = OUT / ('owner-defaults' if owner_defaults else 'repositories') / canonical
+                  put_json(prefix / '_tree.json', tree)
+                  put_json(prefix / '_metadata.json', record)
+                  blobs = [e for e in tree.get('tree', []) if e['type'] == 'blob' and e.get('size', 0) <= 250000 and e.get('mode') != '120000']
+                  policies = [e for e in blobs if policy_path(e['path'])]
+                  code = [] if owner_defaults else sorted((e for e in blobs if source_score(e['path']) >= 0), key=lambda e: (-source_score(e['path']), e['path']))[:80]
+                  selected = {e['path']: e for e in policies + code}
+                  record['selected_files'] = [{'path': e['path'], 'blob_sha': e['sha'], 'policy': policy_path(e['path'])} for e in selected.values()]
+                  for e in selected.values():
+                      tasks.append((canonical, sha, e, prefix))
+                  if not owner_defaults:
+                      owners.add(meta['owner']['login'])
+              except Exception as error:
+                  record['status'] = 'read_error'
+                  record['error'] = str(error)
+              return record
+
+          for repo in REPOS:
+              record = inspect(repo)
+              records.append(record)
+              print(repo, record['status'], record.get('stargazers_count'), flush=True)
+              put_json(OUT / 'repositories.json', records)
+          owner_records = []
+          for owner in sorted(owners):
+              owner_records.append(inspect(owner + '/.github', True))
+          put_json(OUT / 'owner-defaults.json', owner_records)
+
+          def download(task):
+              repo, commit, entry, prefix = task
+              result = {'repository': repo, 'commit_sha': commit, 'path': entry['path'], 'blob_sha': entry['sha']}
+              try:
+                  relative = safe_path(entry['path'])
+                  url = 'https://raw.githubusercontent.com/' + repo + '/' + commit + '/' + urllib.parse.quote(entry['path'], safe='/')
+                  content = request(url)
+                  actual = hashlib.sha1(b'blob ' + str(len(content)).encode() + b'\0' + content).hexdigest()
+                  if actual != entry['sha']:
+                      raise ValueError('Git blob SHA mismatch')
+                  content.decode('utf-8')
+                  target = prefix / 'files' / relative
+                  target.parent.mkdir(parents=True, exist_ok=True)
+                  target.write_bytes(content)
+                  result.update(status='verified', bytes=len(content), local_path=str(target.relative_to(OUT)))
+              except Exception as error:
+                  result.update(status='read_error', error=str(error))
+              return result
+
+          results = []
+          with cf.ThreadPoolExecutor(max_workers=8) as executor:
+              for result in executor.map(download, tasks):
+                  results.append(result)
+          put_json(OUT / 'file-results.json', results)
+          matches = []
+          pattern = re.compile(r'disclos|llm.generated|ai.generated|generative.ai|coding.assistant', re.I)
+          for result in results:
+              if result['status'] == 'verified' and policy_path(result['path']):
+                  for lineno, line in enumerate((OUT / result['local_path']).read_text().splitlines(), 1):
+                      if pattern.search(line):
+                          matches.append({'repository': result['repository'], 'path': result['path'], 'line': lineno, 'text': line})
+          put_json(OUT / 'policy-keyword-matches.json', matches)
+          summary = {'repositories': len(records), 'file_requests': len(results), 'verified_files': sum(r['status'] == 'verified' for r in results), 'errors': sum(r['status'] != 'verified' for r in results), 'executed_upstream_code': False, 'published_upstream_issues_or_prs': False}
+          put_json(OUT / 'summary.json', summary)
+          print(json.dumps(summary), flush=True)
+          PY
+      - name: Preserve public source evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: robotics30-public-source-snapshot
+          path: public-snapshot/
+          include-hidden-files: true
+          retention-days: 7
+          if-no-files-found: error
