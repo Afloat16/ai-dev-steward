@@ -1,0 +1,15 @@
+--- a/llama-index-core/llama_index/core/indices/query/embedding_utils.py
++++ b/llama-index-core/llama_index/core/indices/query/embedding_utils.py
+@@ -68,7 +68,11 @@
+     clf.fit(dataset, y)  # train
+ 
+     # infer on whatever data you wish, e.g. the original data
+-    similarities = clf.decision_function(dataset[1:])
++    similarities = (
++        clf.predict(dataset[1:])
++        if query_mode == VectorStoreQueryMode.LINEAR_REGRESSION
++        else clf.decision_function(dataset[1:])
++    )
+     sorted_ix = np.argsort(-similarities)
+     top_sorted_ix = sorted_ix[:similarity_top_k]
+ 

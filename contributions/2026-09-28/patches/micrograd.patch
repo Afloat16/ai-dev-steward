@@ -1,0 +1,12 @@
+--- a/micrograd/engine.py
++++ b/micrograd/engine.py
+@@ -37,7 +37,8 @@
+         out = Value(self.data**other, (self,), f'**{other}')
+ 
+         def _backward():
+-            self.grad += (other * self.data**(other-1)) * out.grad
++            if other != 0:
++                self.grad += (other * self.data**(other-1)) * out.grad
+         out._backward = _backward
+ 
+         return out

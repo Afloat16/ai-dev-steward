@@ -1,0 +1,11 @@
+--- a/src/diffusers/utils/pil_utils.py
++++ b/src/diffusers/utils/pil_utils.py
+@@ -10,7 +10,7 @@
+     images = (images * 255).round().astype("uint8")
+     if images.shape[-1] == 1:
+         # special case for grayscale (single channel) images
+-        pil_images = [Image.fromarray(image.squeeze(), mode="L") for image in images]
++        pil_images = [Image.fromarray(image.squeeze(-1), mode="L") for image in images]
+     else:
+         pil_images = [Image.fromarray(image) for image in images]
+ 

@@ -1,0 +1,11 @@
+--- a/src/datasets/utils/py_utils.py
++++ b/src/datasets/utils/py_utils.py
+@@ -30,7 +30,6 @@
+     result = re.search(regex, string)
+     if result is None:
+         return None
+-    values = list(result.groups())
+     keys = re.findall(r"{(.+?)}", pattern)
+-    _dict = dict(zip(keys, values))
++    _dict = {key: result.group(f"_{key}") for key in keys}
+     return _dict

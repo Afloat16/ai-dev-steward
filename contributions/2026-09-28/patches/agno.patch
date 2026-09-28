@@ -1,0 +1,11 @@
+--- a/libs/agno/agno/utils/string.py
++++ b/libs/agno/agno/utils/string.py
+@@ -76,7 +76,7 @@
+                     field_value = candidate_obj[field_name]
+                     # If field is a list, extend it; otherwise, use the latest value
+                     if isinstance(field_value, list):
+-                        if field_name not in merged_data:
++                        if not isinstance(merged_data.get(field_name), list):
+                             merged_data[field_name] = []
+                         merged_data[field_name].extend(field_value)
+                     else:

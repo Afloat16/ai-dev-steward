@@ -1,0 +1,10 @@
+--- a/lib/crewai/src/crewai/project/json_loader.py
++++ b/lib/crewai/src/crewai/project/json_loader.py
+@@ -39,6 +39,7 @@
+             continue
+ 
+         if char == "/" and next_char == "*":
++            result.append(" ")
+             i += 2
+             closed = False
+             while i < len(text) - 1:

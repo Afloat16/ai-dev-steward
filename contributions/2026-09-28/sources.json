@@ -1,0 +1,21 @@
+{
+  "date": "2026-09-28",
+  "scope": "Inspected source identity; review diffs have not been git-apply validated against full checkouts.",
+  "sources": [
+    {"slug":"mem0","repo":"mem0ai/mem0","ref":"main","path":"mem0/memory/utils.py","git_blob":"566596c31232e1c17bb264ba22e182bcdcacf8a6"},
+    {"slug":"crawl4ai","repo":"unclecode/crawl4ai","ref":"develop","path":"crawl4ai/chunking_strategy.py","git_blob":"a0bfe1bf4c505b43f1aab89245f56cff6a0c1d49"},
+    {"slug":"crewai","repo":"crewAIInc/crewAI","ref":"main","path":"lib/crewai/src/crewai/project/json_loader.py","git_blob":"c1c95a83a602db2fff3c922ed4fe313e66c5c688"},
+    {"slug":"agno","repo":"agno-agi/agno","ref":"main","path":"libs/agno/agno/utils/string.py","git_blob":"9f3ee59e779fa1673897f8ec5b2228498d9bbd00"},
+    {"slug":"metagpt","repo":"FoundationAgents/MetaGPT","ref":"main","path":"metagpt/utils/repair_llm_raw_output.py","git_blob":"5c57693f748943baeaa8c2aec0b4409c77685ebd"},
+    {"slug":"llama-index","repo":"run-llama/llama_index","ref":"main","path":"llama-index-core/llama_index/core/indices/query/embedding_utils.py","git_blob":"f64d42dd6b9a44d765a686f295444357b3f46006"},
+    {"slug":"accelerate","repo":"huggingface/accelerate","ref":"main","path":"src/accelerate/utils/modeling.py","git_blob":"cf3371d40205afbfd519224ad8003ab8cd168d12"},
+    {"slug":"diffusers","repo":"huggingface/diffusers","ref":"main","path":"src/diffusers/utils/pil_utils.py","git_blob":"72d4704fa945f0cc4edfa8e6a15955cd75fd18f1"},
+    {"slug":"autogen","repo":"microsoft/autogen","ref":"main","path":"python/packages/autogen-core/src/autogen_core/utils/_load_json.py","git_blob":"95ccb0e7c0df9c9dc29debd125eaecc22150adbb","whole_module_byte_verified":true},
+    {"slug":"whisper","repo":"openai/whisper","ref":"main","path":"whisper/utils.py","git_blob":"79658fc751882c54fd1fe0dc015281ee19cdbecb"},
+    {"slug":"sentence-transformers","repo":"huggingface/sentence-transformers","ref":"main","path":"sentence_transformers/util/quantization.py","git_blob":"13c860c15073c05d2eca2367da6d48e4720f0993"},
+    {"slug":"micrograd","repo":"karpathy/micrograd","ref":"master","path":"micrograd/engine.py","git_blob":"afd82cc573777421cfec2437a402539a82b70203","whole_module_byte_verified":true},
+    {"slug":"datasets","repo":"huggingface/datasets","ref":"main","path":"src/datasets/utils/py_utils.py","git_blob":"df6d7b977b554cf772eeb32dcdf8dc5f0b0f2f4c"},
+    {"slug":"markitdown","repo":"microsoft/markitdown","ref":"main","path":"packages/markitdown/src/markitdown/converters/_ipynb_converter.py","git_blob":"6bc1c1673fca663ef7f6a23fe886ff5134ac1891"},
+    {"slug":"gradio","repo":"gradio-app/gradio","ref":"main","path":"gradio/processing_utils.py","git_blob":"75b030a6be09baf26af63d0f91809d73673f5de7"}
+  ]
+}
