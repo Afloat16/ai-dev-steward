@@ -1,0 +1,33 @@
+{
+  "audit_date": "2026-09-28",
+  "account": "Afloat16",
+  "test_environment": {
+    "os": "Debian GNU/Linux 13 (trixie)",
+    "python": "3.13.5",
+    "numpy": "2.3.5",
+    "scipy": "1.17.0",
+    "pillow": "12.3.0",
+    "pytest": "9.0.2"
+  },
+  "validation_scope": "Complete Git-blob-verified upstream modules, imported by file path; not full package installations or full project CI.",
+  "baseline": {"failed": 20, "passed": 14, "exit_code": 1},
+  "patched": {"failed": 0, "passed": 34, "exit_code": 0},
+  "projects": [
+    {"project": "openpi", "baseline_failed": 4, "baseline_passed": 4, "patched_passed": 8},
+    {"project": "stable-baselines3", "baseline_failed": 10, "baseline_passed": 1, "patched_passed": 11},
+    {"project": "PythonRobotics", "baseline_failed": 6, "baseline_passed": 9, "patched_passed": 15}
+  ],
+  "upstream_issues_created": 0,
+  "upstream_prs_created": 0,
+  "upstream_prs_merged": 0,
+  "publication_attempt": {"repo": "Physical-Intelligence/openpi", "action": "create_issue", "status": 403, "message": "Resource not accessible by integration"},
+  "full_project_ci_run": false,
+  "hardware_tested": false,
+  "gpu_training_tested": false,
+  "limitations": [
+    "openpi empty-batch return contract needs maintainer agreement",
+    "SB3 fully-AI PR is prohibited unless maintainer-triggered; candidate is research only",
+    "PythonRobotics final-knot defect belongs to existing PR #1433 and is not changed",
+    "No new contributor status or audience growth is claimed"
+  ]
+}

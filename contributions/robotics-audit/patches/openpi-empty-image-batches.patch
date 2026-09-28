@@ -1,0 +1,11 @@
+--- a/packages/openpi-client/src/openpi_client/image_tools.py
++++ b/packages/openpi-client/src/openpi_client/image_tools.py
+@@ -29,6 +29,8 @@
+         return images
+ 
+     original_shape = images.shape
++    if 0 in original_shape[:-3]:
++        return np.empty((*original_shape[:-3], height, width, original_shape[-1]), dtype=images.dtype)
+ 
+     images = images.reshape(-1, *original_shape[-3:])
+     resized = np.stack([_resize_with_pad_pil(Image.fromarray(im), height, width, method=method) for im in images])

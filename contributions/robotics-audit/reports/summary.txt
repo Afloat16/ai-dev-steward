@@ -1,0 +1,19 @@
+Actual focused verification, 2026-09-28
+Python 3.13.5 / NumPy 2.3.5 / SciPy 1.17.0 / Pillow 12.3.0 / pytest 9.0.2
+
+Original complete Git-blob-verified modules:
+20 failed, 14 passed in 0.60s
+Exit code: 1 (expected failing regressions)
+
+Candidate-patched modules:
+..................................                                       [100%]
+34 passed in 0.34s
+Exit code: 0
+
+Independent rerun via verify.py --source-root:
+20 failed, 14 passed in 0.58s
+34 passed in 0.35s
+Runner exit code: 0 (expected red-to-green transition verified)
+
+Scope: isolated full source files, not full-package CI or hardware validation.
+Upstream successful issues: 0; upstream PRs: 0; upstream merges: 0.

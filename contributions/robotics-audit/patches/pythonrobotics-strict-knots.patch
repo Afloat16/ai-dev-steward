@@ -1,0 +1,23 @@
+--- a/PathPlanning/CubicSpline/cubic_spline_planner.py
++++ b/PathPlanning/CubicSpline/cubic_spline_planner.py
+@@ -17,8 +17,7 @@
+     ----------
+     x : list
+         x coordinates for data points. This x coordinates must be
+-        sorted
+-        in ascending order.
++        strictly increasing.
+     y : list
+         y coordinates for data points
+ 
+@@ -46,8 +45,8 @@
+     def __init__(self, x, y):
+ 
+         h = np.diff(x)
+-        if np.any(h < 0):
+-            raise ValueError("x coordinates must be sorted in ascending order")
++        if np.any(h <= 0):
++            raise ValueError("x coordinates must be strictly increasing")
+ 
+         self.a, self.b, self.c, self.d = [], [], [], []
+         self.x = x
