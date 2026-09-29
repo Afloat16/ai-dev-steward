@@ -1,0 +1,17 @@
+{
+  "python": "3.13.5",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "packages": {
+    "pytest": "9.0.2",
+    "numpy": "2.3.5",
+    "torch": "2.10.0+cpu",
+    "scipy": "1.17.0",
+    "pandas": "2.2.3",
+    "pydantic": "2.13.4",
+    "einops": "0.8.2",
+    "scikit-learn": "1.8.0",
+    "aiofiles": "24.1.0",
+    "chardet": "5.2.0",
+    "loguru": "0.7.3"
+  }
+}

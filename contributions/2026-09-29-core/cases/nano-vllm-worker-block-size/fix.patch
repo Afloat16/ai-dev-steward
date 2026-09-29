@@ -1,0 +1,10 @@
+--- a/nanovllm/engine/model_runner.py
++++ b/nanovllm/engine/model_runner.py
+@@ -18,6 +18,7 @@
+         self.config = config
+         hf_config = config.hf_config
+         self.block_size = config.kvcache_block_size
++        Sequence.block_size = self.block_size
+         self.enforce_eager = config.enforce_eager
+         self.world_size = config.tensor_parallel_size
+         self.rank = rank

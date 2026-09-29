@@ -1,0 +1,26 @@
+--- a/verl/trainer/core_algos.py
++++ b/verl/trainer/core_algos.py
+@@ -152,17 +152,18 @@
+             shape: (bs, response_length)
+ 
+     """
+-    nextvalues = 0
+-    lastgaelam = 0
++    nextvalues = torch.zeros_like(values[:, 0])
++    lastgaelam = torch.zeros_like(values[:, 0])
+     advantages_reversed = []
+     gen_len = token_level_rewards.shape[-1]
+     for t in reversed(range(gen_len)):
+         delta = token_level_rewards[:, t] + gamma * nextvalues - values[:, t]
+         gaelam = delta + gamma * lam * lastgaelam
+ 
+-        if response_mask[:, t]:  # skip values and TD-error on observation tokens
+-            nextvalues = values[:, t]
+-            lastgaelam = gaelam
++        # Skip observation tokens independently for each trajectory.
++        active = response_mask[:, t].bool()
++        nextvalues = torch.where(active, values[:, t], nextvalues)
++        lastgaelam = torch.where(active, gaelam, lastgaelam)
+ 
+         advantages_reversed.append(lastgaelam)
+ 

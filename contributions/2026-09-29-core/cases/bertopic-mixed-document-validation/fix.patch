@@ -1,0 +1,12 @@
+--- a/bertopic/_utils.py
++++ b/bertopic/_utils.py
+@@ -42,7 +42,8 @@
+     if isinstance(documents, pd.DataFrame):
+         raise TypeError("Make sure to supply a list of strings, not a dataframe.")
+     elif isinstance(documents, Iterable) and not isinstance(documents, str):
+-        if not any([isinstance(doc, str) for doc in documents]):
++        document_types = [isinstance(doc, str) for doc in documents]
++        if not document_types or not all(document_types):
+             raise TypeError("Make sure that the iterable only contains strings.")
+     else:
+         raise TypeError("Make sure that the documents variable is an iterable containing strings only.")

@@ -1,0 +1,22 @@
+--- a/crawl4ai/deep_crawling/bfs_strategy.py
++++ b/crawl4ai/deep_crawling/bfs_strategy.py
+@@ -227,7 +227,8 @@
+             depths = dict(self._resume_state.get("depths", {}))
+             self._pages_crawled = self._resume_state.get("pages_crawled", 0)
+         else:
+-            # Original initialization
++            # A fresh crawl gets its own page budget, even on a reused strategy.
++            self._pages_crawled = 0
+             visited: Set[str] = set()
+             # current_level holds tuples: (url, parent_url)
+             current_level: List[Tuple[str, Optional[str]]] = [(start_url, None)]
+@@ -325,7 +326,8 @@
+             depths = dict(self._resume_state.get("depths", {}))
+             self._pages_crawled = self._resume_state.get("pages_crawled", 0)
+         else:
+-            # Original initialization
++            # A fresh crawl gets its own page budget, even on a reused strategy.
++            self._pages_crawled = 0
+             visited: Set[str] = set()
+             current_level: List[Tuple[str, Optional[str]]] = [(start_url, None)]
+             depths: Dict[str, int] = {start_url: 0}

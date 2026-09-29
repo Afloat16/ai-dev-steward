@@ -1,0 +1,11 @@
+--- a/flair/nn/distance/hyperbolic.py
++++ b/flair/nn/distance/hyperbolic.py
+@@ -96,7 +96,7 @@
+ 
+         # Compute bilinear form
+         left = mat_1_x_0.mm(mat_2_x_0.t())  # n_1 x n_2
+-        right = mat_1[:, 1:].mm(mat_2[:, 1:].t())  # n_1 x n_2
++        right = mat_1.mm(mat_2.t())  # n_1 x n_2
+ 
+         # Arcosh
+         return arccosh(left - right).pow(2)

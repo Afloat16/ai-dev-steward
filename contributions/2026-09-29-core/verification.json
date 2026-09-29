@@ -1,0 +1,12 @@
+{
+  "cases": 9,
+  "before_failed": 82,
+  "before_passed": 39,
+  "after_passed": 121,
+  "upstream_issues_created": 3,
+  "denied_posts": 6,
+  "upstream_prs_created": 0,
+  "upstream_merges": 0,
+  "patch_checks": "all passed",
+  "excluded": "BERTopic single-feature c-TF-IDF issue duplicates #2034 and is not counted"
+}
