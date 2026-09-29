@@ -1,0 +1,29 @@
+{
+  "audit_date": "2026-09-29",
+  "account": "Afloat16",
+  "environment": {"python": "3.13.5", "numpy": "2.3.5", "torch": "2.10.0+cpu", "pytest": "9.0.2"},
+  "baseline": {"failed": 29, "passed": 15},
+  "patched": {"passed": 44},
+  "standalone_proposed_tests": {"passed": 38, "subset_of_44": true},
+  "publisher_offline_tests": {"passed": 31, "live_api_test": false},
+  "upstream_success": {"issues": 0, "pull_requests": 0, "merged": 0},
+  "failed_publication_requests": [
+    {"repo": "danijar/dreamerv3", "action": "create_issue", "http_status": 403},
+    {"repo": "nicklashansen/tdmpc2", "action": "create_issue", "http_status": 403}
+  ],
+  "cases": [
+    {"id": "vggt_newton", "repo": "facebookresearch/vggt", "path": "vggt/dependency/distortion.py", "source_blob": "b3510230265dbd088844076e9d5763a35f7d712b", "snapshot": "full module, blob verified", "baseline_failed": 6, "baseline_passed": 9, "patched_passed": 15, "gate": "Meta CLA and integration review"},
+    {"id": "dreamer_recency", "repo": "danijar/dreamerv3", "path": "embodied/core/selectors.py", "source_blob": "63eed6a2338949a3ed1328ecaebbcb201d56da87", "snapshot": "full module, blob verified", "baseline_failed": 9, "baseline_passed": 0, "patched_passed": 9},
+    {"id": "dreamer_priority", "repo": "danijar/dreamerv3", "path": "embodied/core/selectors.py", "source_blob": "63eed6a2338949a3ed1328ecaebbcb201d56da87", "snapshot": "full module, blob verified", "baseline_failed": 6, "baseline_passed": 1, "patched_passed": 7, "limitation": "serialized delayed updates; no full concurrent replay guarantee"},
+    {"id": "tdmpc_gumbel", "repo": "nicklashansen/tdmpc2", "path": "tdmpc2/common/math.py", "source_blob": "658ae23ece7c3d321229cb5199c5766ad6fdc6da", "snapshot": "full module, blob verified", "baseline_failed": 4, "baseline_passed": 3, "patched_passed": 7},
+    {"id": "robomimic_generator", "repo": "ARISE-Initiative/robomimic", "path": "robomimic/utils/dataset.py", "source_blob": "a60d10198680c629074903f3cbccaf6066f0b04e", "snapshot": "exact complete class excerpt; full-file blob obtained from GitHub metadata, not locally reconstructed", "baseline_failed": 4, "baseline_passed": 2, "patched_passed": 6, "gate": "required tests/test.sh and native package import not run"}
+  ],
+  "duplicate_review": {
+    "dreamer_recency": "recency PR search: none; issues 117/129 concern other replay configuration questions; UnboundLocalError search: none",
+    "dreamer_priority": "priority PR search and prioritize/removed issue search: no matching fix returned",
+    "vggt_newton": "distortion PR search: none; returned issues discuss coefficients/imports/shapes, not the extra identity in this Newton Jacobian",
+    "tdmpc_gumbel": "gumbel PR search: none; issue 71 concerns double logarithms, not the selected output axis",
+    "robomimic_generator": "sampler generator PR search and CustomWeightedRandomSampler issue search: no matching fix returned",
+    "limitation": "Search coverage is bounded and not a proof of novelty; repeat before submission."
+  }
+}

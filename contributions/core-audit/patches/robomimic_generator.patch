@@ -1,0 +1,16 @@
+--- a/robomimic/utils/dataset.py
++++ b/robomimic/utils/dataset.py
+@@ -18,7 +18,12 @@
+         super().__init__(*args, **kwargs)
+ 
+     def __iter__(self):
+-        rand_tensor = np.random.choice(range(0, len(self.weights)),
++        choice = np.random.choice
++        if self.generator is not None:
++            seed = torch.empty((), dtype=torch.int64, device=self.generator.device).random_(
++                generator=self.generator).item()
++            choice = np.random.default_rng(seed).choice
++        rand_tensor = choice(len(self.weights),
+                                        size=self.num_samples,
+                                        p=self.weights.numpy() / torch.sum(self.weights).numpy(),
+                                        replace=self.replacement)
