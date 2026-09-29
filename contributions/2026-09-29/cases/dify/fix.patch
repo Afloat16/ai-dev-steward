@@ -1,0 +1,12 @@
+--- a/api/libs/datetime_utils.py
++++ b/api/libs/datetime_utils.py
+@@ -84,7 +84,8 @@
+         except pytz.AmbiguousTimeError:
+             return tz.localize(dt, is_dst=False).astimezone(utc)
+         except pytz.NonExistentTimeError:
+-            dt += datetime.timedelta(hours=1)
++            gap = abs(tz.localize(dt, is_dst=True).utcoffset() - tz.localize(dt, is_dst=False).utcoffset())
++            dt += gap
+             return tz.localize(dt, is_dst=None).astimezone(utc)
+ 
+     start_dt = _parse(start, "start")

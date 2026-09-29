@@ -1,0 +1,10 @@
+--- a/src/textblob/utils.py
++++ b/src/textblob/utils.py
+@@ -46,6 +46,7 @@
+     chunk, tag_suffixes: Iterable[str] = ("DT", "CC", "PRP$", "PRP")
+ ):
+     """Filter out insignificant (word, tag) tuples from a chunk of text."""
++    tag_suffixes = tuple(tag_suffixes)
+     good: list[tuple[str, str]] = []
+     for word, tag in chunk:
+         ok = True

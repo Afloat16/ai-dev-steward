@@ -1,0 +1,11 @@
+--- a/recommenders/utils/python_utils.py
++++ b/recommenders/utils/python_utils.py
+@@ -200,6 +200,8 @@
+             "Number of items is less than top_k, limiting top_k to number of items"
+         )
+     k = min(top_k, scores.shape[1])
++    if k == 0:
++        return np.empty((scores.shape[0], 0), dtype=np.intp), np.empty((scores.shape[0], 0), dtype=scores.dtype)
+ 
+     test_user_idx = np.arange(scores.shape[0])[:, None]
+ 
