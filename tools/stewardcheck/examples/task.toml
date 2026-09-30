@@ -1,0 +1,11 @@
+# Explicit opt-in: stewardcheck start "Fix parsing" --config .stewardcheck.toml
+# Review and adapt before copying into your project. No command runs at start.
+schema = 1
+scope = ["src/**", "tests/**"]
+checks = [["python", "-m", "unittest", "discover", "-s", "tests"]]
+acceptance = ["Preserve existing behavior outside the requested change"]
+max_files = 12
+timeout = 120
+scan_mib = 256
+# Omitting protect preserves built-in protections. An explicit protect array
+# replaces them in full; protect = [] intentionally removes all protections.

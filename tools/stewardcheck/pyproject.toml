@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stewardcheck"
+version = "0.2.0"
+description = "Task-scoped change receipts for LLM coding workflows."
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY.md"]
+authors = [{name = "Afloat16"}]
+keywords = ["llm", "vibecoding", "git", "code-review", "developer-tools"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Programming Language :: Python :: 3",
+  "Topic :: Software Development :: Quality Assurance",
+]
+dependencies = []
+
+[project.scripts]
+stewardcheck = "stewardcheck.cli:main"
+
+[project.urls]
+Repository = "https://github.com/Afloat16/ai-dev-steward/tree/main/tools/stewardcheck"
+Issues = "https://github.com/Afloat16/ai-dev-steward/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.coverage.run]
+source = ["stewardcheck"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
