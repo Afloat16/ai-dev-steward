@@ -6,6 +6,7 @@
 - Add explicit `start --config PATH` with schema-1 TOML defaults, strict validation, repository-root-relative paths, and documented CLI replacement precedence. Configuration never auto-loads or executes commands.
 - Pin resolved config to the existing task contract. New tasks additionally protect `.stewardcheck.toml` by default; existing task policies are unchanged.
 - Reject non-regular state/config files before opening; use bounded reads and POSIX nonblocking open to avoid FIFO hangs and detect file replacement during reads. This is not a hostile-filesystem sandbox.
+- Compare full stat metadata within the same query API to support Windows timestamp/permission representations while retaining cross-API file identity and content-metadata checks.
 - Avoid retaining complete source texts in start/check/report snapshots while preserving all hashes and scan metadata. Context packets still receive text. Include a reproducible synthetic memory benchmark.
 - Add the producing tool version to receipts and validate malformed task envelopes as operational errors.
 - Use SPDX license metadata and include license/attribution notices in wheel metadata; include the TOML example in the source distribution.

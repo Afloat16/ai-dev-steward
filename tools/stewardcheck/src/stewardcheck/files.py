@@ -9,6 +9,18 @@ from pathlib import Path
 from .common import StewardError
 
 
+def _signature(info: os.stat_result) -> tuple:
+    """Full consistency signature for two results from the same stat API."""
+    return (info.st_dev, info.st_ino, info.st_mode, info.st_size,
+            info.st_mtime_ns, info.st_ctime_ns)
+
+
+def _file_identity(info: os.stat_result) -> tuple:
+    """Fields comparable between pathname and descriptor queries."""
+    return (info.st_dev, info.st_ino, stat.S_IFMT(info.st_mode),
+            info.st_size, info.st_mtime_ns)
+
+
 def read_bounded(path: Path, limit: int) -> bytes:
     """Reject links/special files and changes during a bounded read.
 
@@ -29,9 +41,12 @@ def read_bounded(path: Path, limit: int) -> bytes:
         after = os.fstat(stream.fileno())
     if len(data) > limit:
         raise StewardError("File exceeds the read limit.")
-    def identity(info: os.stat_result) -> tuple:
-        return (info.st_dev, info.st_ino, info.st_mode, info.st_size,
-                info.st_mtime_ns, info.st_ctime_ns)
-    if not identity(before) == identity(opened) == identity(after) == identity(path.lstat()):
+    # Windows pathname stat and fstat can differ in ctime semantics and
+    # synthesized permission bits. Compare those only within the same API;
+    # retain cross-API file identity, size, type, and modification-time checks.
+    if (_signature(before) != _signature(path.lstat())
+            or _signature(opened) != _signature(after)
+            or _file_identity(before) != _file_identity(opened)
+            or len(data) != opened.st_size):
         raise StewardError("File changed while reading it; stop concurrent writers and retry.")
     return data

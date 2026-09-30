@@ -4,11 +4,15 @@
 
 Local environment: Linux, CPython 3.13.5, Git 2.47.3.
 
-- 118 unit/integration tests passed, including 27 new tests with additional parameterized invalid-config cases.
-- Coverage.py 7.13.3 measured 94% rounded combined statement/branch coverage: 717 statements, 34 missed statements, 284 branches, 25 partial branches. Config and bounded-file helper coverage was 100% in this run; percentages are not correctness or security proofs.
+- 125 unit/integration tests passed, including 34 new tests with additional parameterized invalid-config cases.
+- Coverage.py 7.13.3 measured 94% rounded combined statement/branch coverage: 719 statements, 34 missed statements, 284 branches, 25 partial branches. Config and bounded-file helper coverage was 100% in this run; percentages are not correctness or security proofs.
 - Reproduced the 0.1.0 FIFO-state hang in an isolated subprocess stopped after two seconds. New regression tests require state/config FIFOs to return an operational error within a subprocess deadline.
-- Built the 0.2.0 wheel with setuptools 82.0.1 and wheel 0.46.3, installed it with no dependencies into a fresh virtual environment, and reran all 118 tests successfully without a source PYTHONPATH.
+- Built the 0.2.0 wheel with setuptools 82.0.1 and wheel 0.46.3, installed it with no dependencies into a fresh virtual environment, and reran all 125 tests successfully without a source PYTHONPATH.
 - The existing isolated demo still verified a passing check, stale receipt, and out-of-scope blocker without executing checks after the blocker.
+
+### Cross-platform read regression
+
+The first PR run passed on Linux and macOS but failed on Windows because the new reader compared `lstat` and `fstat` metadata as interchangeable. CPython's Windows pathname implementation may preserve creation time in `st_ctime`, while descriptor queries report metadata-change time; synthesized permission bits can also differ. The reader now checks full metadata separately within each API and retains cross-API device/inode, file type, size, modification-time, and actual read-length validation. Seven additional regression tests exercise valid representation differences and rejected mutations; no Windows failure was suppressed by skipping a test. Final cross-platform outcomes are recorded in the PR's actual CI runs.
 
 ### Synthetic snapshot allocation comparison
 
