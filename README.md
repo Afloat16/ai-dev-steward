@@ -2,144 +2,109 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-**Less clutter. Traceable experiments. Reviewable optimizations.**
+**Focused changes. Traceable evidence. Less clutter.**
 
-AI Dev Steward is an Agent Skill for keeping AI-assisted algorithm development lean, reproducible, and reviewable. It helps consolidate redundant planning files, audit stale experimental artifacts, and organize complex optimization branches into changes that reviewers can trace to tests, measurements, ablations, and rollback steps.
+AI Dev Steward combines an agent skill for artifact hygiene and algorithm-review discipline with **StewardCheck**, a local CLI for task-scoped coding checks. Use either component independently, or use them together in an existing issue or pull request. No model account, API key, server, or third-party Python runtime dependency is required.
 
-The skill combines a development workflow with four read-only Python tools. It favors existing issues, pull requests, and experiment trackers over new administrative files, and treats cleanup candidates and performance claims as evidence to review—not permission to delete or merge.
+## Choose the right tool
 
-**v1.1.0 · Python 3.10+ · Git · No third-party Python dependencies · Read-only tools**
+| Your task | Component | Requirements |
+| --- | --- | --- |
+| Check what changed during a coding task, whether edits stayed in scope, and whether test results are still current | [StewardCheck](tools/stewardcheck/README.md), **0.2.0 alpha** | Python 3.11+ and Git |
+| Audit stale artifacts, retain reproducibility evidence, or review attribution across algorithm optimizations | [Agent Skill](SKILL.md) and `scripts/steward.py`, **v1.1.0** | Python 3.10+ and Git |
 
-## Why this skill exists
+The distinction matters: the skill's four tools are read-only. StewardCheck stores one local task record in Git metadata and runs declared programs **only with `check --run`**. Neither component automatically edits source, deletes project artifacts, rolls back work, or merges changes.
 
-AI-assisted development can leave behind overlapping plans, forgotten logs, intermediate datasets, and experimental outputs. Meanwhile, a single optimization branch may mix refactoring, algorithm changes, precision adjustments, and caching, making it difficult to tell what changed, which experiment measured it, or how to undo it.
+## Start with StewardCheck
 
-AI Dev Steward addresses both problems without creating another layer of planning clutter.
+Install the independently packaged CLI from this repository using [pipx](https://pipx.pypa.io/stable/):
 
-| Problem | Approach |
-| --- | --- |
-| Duplicate `planning`, `planing`, and versioned plan files | Keep one active plan per task. Preserve unique decisions and acceptance criteria before consolidating old documents. Filename matches are review hints, not proof of duplication. |
-| Stale or unowned experiment artifacts | Inventory files and check lifecycle records, ownership, expiry, reproducibility, content hashes, and declared dependencies before identifying quarantine candidates. |
-| Cleanup that could damage reproducibility | Retain unknown or protected artifacts and their transitive dependencies. Require explicit, path-level approval and a verified recovery procedure for manual quarantine. |
-| Large, mixed-purpose optimization branches | Map logical changes to files, invariants, tests, experiments, and rollback steps; suggest a dependency-aware reading order. |
-| Performance improvements without clear attribution | Check paired metrics, comparison conditions, provenance fields, and declared ablation coverage; make missing evidence explicit. |
+```sh
+pipx install "git+https://github.com/Afloat16/ai-dev-steward.git#subdirectory=tools/stewardcheck"
+stewardcheck --version
+```
 
-## Quick start
+Alternatively, clone this repository and run `python -m pip install ./tools/stewardcheck` in an activated Python 3.11+ virtual environment. Installation does not require installing an agent skill, and no PyPI release is assumed.
 
-### Install
+From the Git project you want to change:
 
-Place the complete repository in your agent host's supported skill directory and keep the directory name `ai-dev-steward`. For a host that discovers skills under `.agents/skills`, run this from the project root:
+```sh
+stewardcheck start "Fix empty-input handling" \
+  --scope "src/**" --scope "tests/**" \
+  --check "python -m unittest discover -s tests" \
+  --accept "Preserve behavior outside the requested fix"
+
+stewardcheck packet
+# Review the packet, then use it with your existing coding assistant.
+# Review the edits and declared command before executing checks.
+stewardcheck check --run
+stewardcheck report --format json
+```
+
+Replace the example check with your project's actual test command. Task baselines include existing dirty and non-ignored untracked files. Scope/protected-path rules, heuristic credential/test-weakening checks, and workspace-bound receipts help distinguish `passed`, `blocked`, and `needs-review`; a pass does not prove human acceptance criteria.
+
+For repeat work, explicitly load a reviewed TOML configuration rather than repeating every flag:
+
+```sh
+stewardcheck start "Fix parsing" --config .stewardcheck.toml
+```
+
+The file is optional and never auto-loaded. See the [configuration example](tools/stewardcheck/examples/task.toml), [complete CLI guide](tools/stewardcheck/README.md), and [Chinese CLI guide](tools/stewardcheck/README.zh-CN.md). Configured commands remain pinned to the task and still require explicit execution approval.
+
+## Use the agent skill
+
+Place the complete repository in your host's supported skill directory, keeping the directory name `ai-dev-steward`. For hosts that discover `.agents/skills`:
 
 ```sh
 git clone https://github.com/Afloat16/ai-dev-steward.git .agents/skills/ai-dev-steward
 ```
 
-Alternatively, clone it into a separate directory and explicitly ask your agent to read its `SKILL.md`. Follow your host's discovery rules and avoid multiple active copies. Compatibility with every client has not been tested.
+Otherwise, clone it separately and ask your agent to read `SKILL.md`. Follow your host's discovery rules; do not keep duplicate active copies. Compatibility with every host has not been tested.
 
-### Ask your agent
+> Use ai-dev-steward to audit old plans, logs, and experimental artifacts. Work read-only, distinguish retained items from review-needed items and quarantine candidates, and explain the evidence. Do not create new planning files.
 
-**For artifact hygiene:**
+> Use ai-dev-steward to review the current optimization branch. Pin the compared commits, separate refactoring, algorithm, precision, and caching changes, and identify gaps in tests, ablations, and rollback steps. Put the review in the existing PR and do not rewrite history.
 
-> Use ai-dev-steward to audit old plans, logs, and intermediate experiment artifacts in this project. Work read-only, distinguish retained items from review-needed items and quarantine candidates, and explain the reason for each decision. Do not create new planning files.
-
-**For optimization review:**
-
-> Use ai-dev-steward to review the current optimization branch. Pin the baseline and candidate commits, separate refactoring, algorithm, precision, and caching changes, and identify gaps in tests, ablations, and rollback steps. Put the review in the existing pull request and do not rewrite branch history.
-
-### Run the tools directly
-
-Run these commands from the project you want to inspect. Set `SKILL` to your actual installation path.
+Run the read-only tools directly from the project you want to inspect:
 
 ```sh
 SKILL=.agents/skills/ai-dev-steward
-
-# Inventory artifacts. No ledger is required; no governance files are created.
 python -B "$SKILL/scripts/steward.py" audit --root .
-
-# Inspect committed branch changes and separately report uncommitted work.
 python -B "$SKILL/scripts/steward.py" diff --root . --base main --head HEAD
-
-# Check real measurements produced by your trusted evaluation workflow.
 python -B "$SKILL/scripts/steward.py" gate --input /path/to/actual-evidence.json
-
-# Use the same evidence file, including changes and ablations, for a PR-ready report.
 python -B "$SKILL/scripts/steward.py" review --root . --base main --head HEAD \
   --input /path/to/actual-evidence.json --format markdown
 ```
 
-`/path/to/actual-evidence.json` is a placeholder for your real evaluation record, not a bundled file. Replace `main` with the appropriate baseline ref or fixed commit SHA. If the baseline already contains the candidate changes, choose an earlier baseline or a feature-branch comparison instead.
+Replace the installation path, baseline ref, and evidence path with real values. `diff` compares committed branch changes and reports uncommitted work separately. `gate` checks supplied paired measurements and comparison metadata. `review` checks commit alignment, declared change coverage, dependencies, tests, rollback, and ablations. None of these commands run experiments or authenticate supplied results.
 
-Output goes to the terminal by default. Save it only to an approved, existing destination when needed; do not create timestamped report copies or commit sensitive raw logs.
+## One repository, complementary evidence
 
-## Four tools, one evidence trail
+Use StewardCheck **before editing** to capture the actual task-start workspace, and after editing to inspect scope and explicitly run checks. Use the skill's `diff`, `gate`, and `review` when a change makes algorithmic or performance claims that need measured evidence. A StewardCheck receipt is not a replacement for a metrics record or a claim of acceleration.
 
-| Command | What it checks or produces |
-| --- | --- |
-| `audit` | Read-only artifact inventory, retention reasons, planning-file review hints, and evidence-qualified quarantine candidates. Without a ledger, it inventories rather than authorizing cleanup. Use repeated `--scope` arguments to limit discovery in large projects. |
-| `diff` | Pinned commit SHAs, an inventory of committed changes from merge-base to head, and a separate working-tree status. Uncommitted and ignored content is outside the committed comparison. |
-| `gate` | Paired metrics, units, sample counts, comparison conditions, provenance fields, and both mean and per-pair regression limits. Missing evidence is not silently treated as a pass. |
-| `review` | Commit alignment, changed-file coverage, logical dependencies, test and rollback declarations, and declared ablation coverage. Outputs JSON or a Markdown review packet for an existing PR. |
+Keep discussion in the existing issue, PR, or experiment tracker. Do not automatically convert receipts into benchmark evidence or generate another planning hierarchy. Only when no equivalent source exists and persistent lifecycle state is necessary should the skill use at most one `.ai/state.md` and one `.ai/artifacts.json`. StewardCheck's active record lives under `<git-dir>/stewardcheck/`, not in a new source-tree planning directory.
 
-The tools inspect supplied records; they do not run experiments, execute commands from evidence files, or independently authenticate results.
+## Safety and interpretation
 
-## Workflow principles
+**Retain first.** Names, age, ignore status, and duplicate hashes do not authorize cleanup. Protect source, raw data, baseline/release evidence, active runs, Git-tracked files, and retained dependencies. Quarantine candidacy requires lifecycle declarations, an eligible ordinary single-link file, a matching hash, and fresh reference-review evidence. It still requires explicit path-level approval and a verified recovery procedure; final deletion requires separate approval. Moving a file does not itself free disk space.
 
-### Reuse existing sources of truth
+**Keep claims tied to evidence.** Pin compared commits, configurations, data/split fingerprints, protocols, environments, hardware, precision, budgets, pairing units, seeds, and raw-result pointers. Review baseline, individual factors, the full combination, and declared high-risk interactions; disclose unavailable isolated results rather than inventing them. A changed comparison condition may require a controlled comparison instead of a pass. `CHECKS_PASS` only describes the supplied structure and numeric checks, not authenticity, causality, statistical significance, or approval to merge. Example metrics deliberately return `EXAMPLE_ONLY` and a nonzero exit code.
 
-Prefer your existing issue, PR, or experiment tracker. Only when there is no equivalent and persistent state is necessary should you maintain at most one `.ai/state.md` and one `.ai/artifacts.json`. Small changes and ordinary questions do not require a ledger or experiment matrix.
+**Checks are not a sandbox.** StewardCheck's explicitly approved programs inherit your permissions and environment and can execute project code, access credentials, change files, or use the network. Its scanners are heuristics with false positives and false negatives; ignored untracked content, opaque repository interiors, external dependencies, and transient between-snapshot changes are not comprehensively covered. Records detect accidental changes, not tampering by a process with the same permissions. See the [skill playbook](references/playbook.md) and [StewardCheck threat model](tools/stewardcheck/SECURITY.md).
 
-### Retain first; quarantine only with evidence and approval
-
-File age, name, Git ignore status, and duplicate hashes are not sufficient reasons to delete anything. Unknown artifacts stay retained.
-
-Quarantine candidacy requires an eligible path and regenerable artifact type, a closed and expired record, no active or pinned use, no Git tracking or retained dependents, and a regular file with a single hard link. It also requires closure metadata, a reproduction method, a reference-review declaration no more than seven days old, and a SHA-256 matching the current content. The seven-day window is a conservative convention of this tool, not an external standard.
-
-A candidate is not deletion authorization. Manual quarantine requires a fresh check, exact-path approval, and a verified recovery procedure. Final deletion requires a separate approval. Moving a file into quarantine does not itself free disk space.
-
-### Bind optimization claims to the measured change
-
-Freeze the baseline, candidate, configuration and dirty-patch hashes, dataset and split fingerprints, evaluation protocol, environment, hardware, precision, batch size, training budget, pairing units, seeds, measurement procedure, and raw-result pointers.
-
-For two independent optimization factors, review baseline, A, B, and A+B evidence. For larger changes, require the baseline, each factor in isolation, the full combination, and declared high-risk interactions rather than automatically demanding every possible combination. When factors cannot run independently, document their dependencies and attribution limits instead of inventing isolated results.
-
-If hardware, precision, or another comparison condition is itself the intervention, the automatic gate may report the runs as incomparable. Design a controlled comparison; do not change metadata to bypass the check.
-
-## Safety and limitations
-
-**There are no automatic delete, move, training, or merge commands.** The skill also prohibits unauthorized stashing, resets, force pushes, history rewrites, and overwriting uncommitted work.
-
-Source code, raw data, baseline and release models or evidence, active runs, Git-tracked files, and retained dependencies must be protected. Submodules, nested repositories, symbolic links, and hard-linked files are not ordinary cleanup targets.
-
-Ledger records, reference checks, test results, and experiment pointers are declarations, not independently verified facts. A ledger cannot discover every dynamic reference, remote training job, or object-storage consumer. The tools are not a security sandbox for a hostile, concurrently changing filesystem; actual quarantine requires stopping writes and revalidating paths, content, and consumers.
-
-**`CHECKS_PASS` means the supplied structure and numeric checks passed.** It does not establish experiment authenticity, algorithmic correctness, statistical significance, isolated gains, or causation, and it does not approve a merge. Correctness tests, slice regressions, uncertainty analysis, and human review remain necessary.
-
-## Repository guide
+## Repository guide and maintenance
 
 | Path | Purpose |
 | --- | --- |
 | [SKILL.md](SKILL.md) | Agent entry point, mode selection, stop conditions, and delivery requirements. |
-| [scripts/steward.py](scripts/steward.py) | The four read-only command-line tools. |
-| [tests/](tests/) | Regression and package tests using temporary Git repositories and synthetic metrics. |
-| [references/playbook.md](references/playbook.md) | Lifecycle rules, safety boundaries, experiment attribution, data formats, and exit codes. |
-| [assets/ledger.example.json](assets/ledger.example.json) | Example artifact ledger; not a real project registry. |
-| [assets/metrics.example.json](assets/metrics.example.json) | Example metrics, logical changes, and ablations; not measured results. |
-| [CHANGELOG.md](CHANGELOG.md) | Version history and migration notes. |
-| [README.zh-CN.md](README.zh-CN.md) | Chinese introduction and usage guide. |
+| [scripts/steward.py](scripts/steward.py) | Read-only artifact audit, committed diff, metrics gate, and review packet. |
+| [tools/stewardcheck/](tools/stewardcheck/) | Independently installable task-baseline, context, and receipt CLI. |
+| [references/playbook.md](references/playbook.md) | Lifecycle rules, provenance, attribution, formats, and migration guidance. |
+| [assets/](assets/) | Synthetic ledger and metrics examples, not measured results. |
+| [tests/](tests/) | Skill regressions and cross-component documentation/version checks. |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Run both suites, package checks, and contribution/release guidance. |
+| [CHANGELOG.md](CHANGELOG.md) / [CLI changelog](tools/stewardcheck/CHANGELOG.md) | Independently versioned component histories. |
 
-English is the primary language of the repository introduction. The detailed `SKILL.md`, playbook, and changelog currently remain in Chinese; this README update does not translate the entire skill package.
+English is the primary introduction language, with Chinese READMEs for both components. The detailed skill and playbook remain in Chinese. Existing v1.0 ledger records remain readable but missing review evidence stays non-passing; see the playbook. StewardCheck 0.2.0 keeps schema-1 task records readable without silently changing their pinned policies.
 
-## Tests and migration
-
-Run the included test suite:
-
-```sh
-SKILL=.agents/skills/ai-dev-steward
-python -B -m unittest discover -s "$SKILL/tests" -v
-```
-
-Tests use synthetic data and temporary repositories. They do not demonstrate real model acceleration, real project cleanup, or validation on every operating system or agent host.
-
-The example metrics intentionally return `EXAMPLE_ONLY` and a nonzero exit code. Never present the examples as measured evidence.
-
-Older v1.0 ledgers remain readable, but entries missing the additional review evidence stay `KEEP`. Incomplete experiment provenance is reported rather than silently accepted. See the [playbook](references/playbook.md) and [changelog](CHANGELOG.md) for the format and migration requirements.
+StewardCheck's [MIT license](tools/stewardcheck/LICENSE) applies to that package directory. Its [third-party notices](tools/stewardcheck/THIRD_PARTY.md) and [design survey](tools/stewardcheck/docs/research.md) distinguish conceptual references from reused code and dependencies. Other repository material retains its existing notices and licensing status.
