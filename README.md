@@ -4,7 +4,7 @@
 
 **Focused changes. Traceable evidence. Less clutter.**
 
-AI Dev Steward combines an agent skill for artifact hygiene and algorithm-review discipline with **StewardCheck**, a local CLI for task-scoped coding checks. Use either component independently, or use them together in an existing issue or pull request. No model account, API key, server, or third-party Python runtime dependency is required.
+AI Dev Steward combines an agent skill for artifact hygiene and algorithm-review discipline with **StewardCheck**, a local CLI for task-scoped coding checks. Use either component independently, or use them together in an existing issue or pull request. The local Python tools need no model account, API key, server, or third-party Python runtime dependency. Using the agent skill follows your host's existing setup and authentication.
 
 ## Choose the right tool
 
@@ -42,6 +42,16 @@ stewardcheck report --format json
 ```
 
 Replace the example check with your project's actual test command. Task baselines include existing dirty and non-ignored untracked files. Scope/protected-path rules, heuristic credential/test-weakening checks, and workspace-bound receipts help distinguish `passed`, `blocked`, and `needs-review`; a pass does not prove human acceptance criteria.
+
+### Read the receipt
+
+| Verdict | Meaning and next step |
+| --- | --- |
+| `passed` | Declared checks ran for the recorded workspace and no blocker or warning was recorded. Review the human acceptance criteria separately. |
+| `blocked` | An error was recorded, such as a scope violation or failed check. Inspect the findings; static blockers prevent check execution. |
+| `needs-review` | A warning remains, such as unrun checks or a changed workspace. Resolve the warning or rerun the reviewed checks before relying on the receipt. |
+
+Run `stewardcheck doctor` to inspect prerequisites and suggested commands, or `stewardcheck check` to inspect changes without executing declared programs. After any edit, `stewardcheck report` checks whether the saved receipt is stale. See the [CLI guide](tools/stewardcheck/README.md) for exit codes and full coverage limits.
 
 For repeat work, explicitly load a reviewed TOML configuration rather than repeating every flag:
 
@@ -107,4 +117,23 @@ Keep discussion in the existing issue, PR, or experiment tracker. Do not automat
 
 English is the primary introduction language, with Chinese READMEs for both components. The detailed skill and playbook remain in Chinese. Existing v1.0 ledger records remain readable but missing review evidence stays non-passing; see the playbook. StewardCheck 0.2.0 keeps schema-1 task records readable without silently changing their pinned policies.
 
+## Development and validation
+
+From the repository root, in an activated Python 3.11+ virtual environment:
+
+```sh
+python -m pip install -e ./tools/stewardcheck
+python -B -m unittest discover -s tests -v
+python -m unittest discover -s tools/stewardcheck/tests -v
+python tools/stewardcheck/examples/demo.py
+```
+
+Run the two test discovery roots separately. The original skill tools can be tested on Python 3.10 without installing StewardCheck. The demo uses a temporary repository to show a passing check, a stale receipt, and an out-of-scope blocker. The [recorded validation](tools/stewardcheck/docs/validation.md) states its environment and limits; inspect the [actual workflow runs](https://github.com/Afloat16/ai-dev-steward/actions/workflows/stewardcheck.yml) for current CI results. See [CONTRIBUTING.md](CONTRIBUTING.md) for packaging and contribution checks.
+
+## License and attribution
+
 StewardCheck's [MIT license](tools/stewardcheck/LICENSE) applies to that package directory. Its [third-party notices](tools/stewardcheck/THIRD_PARTY.md) and [design survey](tools/stewardcheck/docs/research.md) distinguish conceptual references from reused code and dependencies. Other repository material retains its existing notices and licensing status.
+
+## Related projects
+
+See the [Afloat16 project guide](https://github.com/Afloat16/research-to-fix/blob/main/docs/PROJECTS.md) for requirements debate, evidence-driven debugging, task checks, endpoint diagnostics, notifications, MCP advice, and local reconstruction.

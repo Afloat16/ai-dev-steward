@@ -4,7 +4,7 @@
 
 **改动有边界，证据可追溯，项目少残留。**
 
-本仓库包含两个可以独立使用、也可以协同工作的组件：用于实验产物治理与算法优化审查的 Agent Skill，以及用于日常编码任务验收的 **StewardCheck**。无需模型账号、API Key、服务器或第三方 Python 运行时依赖。
+本仓库包含两个可以独立使用、也可以协同工作的组件：用于实验产物治理与算法优化审查的 Agent Skill，以及用于日常编码任务验收的 **StewardCheck**。本地 Python 工具无需模型账号、API Key、服务器或第三方 Python 运行时依赖；使用 Agent Skill 时遵循宿主已有的配置和身份认证。
 
 ## 选择入口
 
@@ -42,6 +42,16 @@ stewardcheck report --format json
 ```
 
 请替换为项目真实使用的测试命令。基线包含任务开始时已有的未提交修改和未忽略的未跟踪文件；规则检查范围、受保护路径以及疑似凭据和测试削弱，验收记录绑定工作区状态。结果分为 `passed`、`blocked`、`needs-review`，不把测试成功当作人工验收条件已经被证明。
+
+### 如何读验收记录
+
+| 结果 | 含义与下一步 |
+| --- | --- |
+| `passed` | 已声明检查针对记录的工作区执行，且没有记录阻塞或警告；人工验收条件仍需单独审阅。 |
+| `blocked` | 记录了范围越界、检查失败等错误。先查看问题；静态阻塞会阻止执行检查命令。 |
+| `needs-review` | 仍有未执行检查、工作区变化等警告。解决警告或重新运行已审阅的检查后，再依赖这份记录。 |
+
+运行 `stewardcheck doctor` 可检查前置条件与建议命令，`stewardcheck check` 可检查改动而不执行已声明程序。再次编辑后，`stewardcheck report` 会核对记录是否过期。退出码与完整覆盖限制见[CLI 指南](tools/stewardcheck/README.zh-CN.md)。
 
 重复任务可以复用一份经过审阅的 TOML 配置：
 
@@ -107,4 +117,23 @@ python -B "$SKILL/scripts/steward.py" review --root . --base main --head HEAD \
 
 主介绍以英文为主，两个组件均有中文 README；详细 Skill 和操作手册保持中文。v1.0 账本仍可读，缺少审阅证据的条目不会被视为通过。StewardCheck 0.2.0 保留 schema-1 任务记录兼容性，不会静默改变既有任务策略。
 
+## 开发与验证
+
+从仓库根目录，在已激活的 Python 3.11+ 虚拟环境运行：
+
+```sh
+python -m pip install -e ./tools/stewardcheck
+python -B -m unittest discover -s tests -v
+python -m unittest discover -s tools/stewardcheck/tests -v
+python tools/stewardcheck/examples/demo.py
+```
+
+两套测试使用独立发现目录，分别执行。只测试原有 Skill 工具时，可使用 Python 3.10 而不安装 StewardCheck。演示在临时仓库中展示检查通过、记录过期与范围越界阻塞。[已有验证记录](tools/stewardcheck/docs/validation.md)说明环境和限制；当前 CI 结果以[实际工作流运行](https://github.com/Afloat16/ai-dev-steward/actions/workflows/stewardcheck.yml)为准。打包和贡献检查见[CONTRIBUTING.md](CONTRIBUTING.md)。
+
+## 许可与归属
+
 [MIT 许可证](tools/stewardcheck/LICENSE)适用于 StewardCheck 包目录。[第三方说明](tools/stewardcheck/THIRD_PARTY.md)与[设计调研](tools/stewardcheck/docs/research.md)区分概念参考、代码复用与依赖；仓库其他材料保留其原有声明和许可状态。
+
+## 相关开源项目
+
+按用途浏览 [Afloat16 项目导航](https://github.com/Afloat16/research-to-fix/blob/main/docs/PROJECTS.md)，选择需求论证、调研修复、任务验收、接口诊断、通知、MCP 建议或本地重建工具。
