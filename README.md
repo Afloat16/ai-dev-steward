@@ -136,4 +136,5 @@ StewardCheck's [MIT license](tools/stewardcheck/LICENSE) applies to that package
 
 ## Related projects
 
-See the [Afloat16 project guide](https://github.com/Afloat16/research-to-fix/blob/main/docs/PROJECTS.md) for requirements debate, evidence-driven debugging, task checks, endpoint diagnostics, notifications, MCP advice, and local reconstruction.
+See the [Afloat16 project guide](https://github.com/Afloat16/research-to-fix/blob/main/docs/PROJECTS.md) for robotics diagnostics, model interfaces, 3D geometry, research and engineering workflows.
+
