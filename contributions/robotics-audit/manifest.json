@@ -1,0 +1,49 @@
+[
+  {
+    "name": "openpi_image_tools.py",
+    "repo": "Physical-Intelligence/openpi",
+    "path": "packages/openpi-client/src/openpi_client/image_tools.py",
+    "sha": "7a971b9d5f6b1495fd6cdea202ffa607d8b34bf0",
+    "patch": "openpi-empty-image-batches.patch",
+    "edits": [
+      [
+        "    original_shape = images.shape\n",
+        "    original_shape = images.shape\n    if 0 in original_shape[:-3]:\n        return np.empty((*original_shape[:-3], height, width, original_shape[-1]), dtype=images.dtype)\n"
+      ]
+    ]
+  },
+  {
+    "name": "sb3_running_mean_std.py",
+    "repo": "DLR-RM/stable-baselines3",
+    "path": "stable_baselines3/common/running_mean_std.py",
+    "sha": "c8f03b212525b558e299a1a05d5f7a3bd48e7b58",
+    "patch": "sb3-empty-statistics.patch",
+    "edits": [
+      [
+        "    def update(self, arr: np.ndarray) -> None:\n",
+        "    def update(self, arr: np.ndarray) -> None:\n        if arr.shape[0] == 0:\n            return\n"
+      ],
+      [
+        "    def update_from_moments(self, batch_mean: np.ndarray, batch_var: np.ndarray, batch_count: float) -> None:\n",
+        "    def update_from_moments(self, batch_mean: np.ndarray, batch_var: np.ndarray, batch_count: float) -> None:\n        if batch_count == 0:\n            return\n"
+      ]
+    ]
+  },
+  {
+    "name": "pythonrobotics_cubic_spline.py",
+    "repo": "AtsushiSakai/PythonRobotics",
+    "path": "PathPlanning/CubicSpline/cubic_spline_planner.py",
+    "sha": "2391f67c393d5cd3d4137973e163a13bec034bd9",
+    "patch": "pythonrobotics-strict-knots.patch",
+    "edits": [
+      [
+        "        sorted\n        in ascending order.\n",
+        "        strictly increasing.\n"
+      ],
+      [
+        "        if np.any(h < 0):\n            raise ValueError(\"x coordinates must be sorted in ascending order\")\n",
+        "        if np.any(h <= 0):\n            raise ValueError(\"x coordinates must be strictly increasing\")\n"
+      ]
+    ]
+  }
+]

@@ -1,0 +1,19 @@
+--- a/stable_baselines3/common/running_mean_std.py
++++ b/stable_baselines3/common/running_mean_std.py
+@@ -33,12 +33,16 @@
+         self.update_from_moments(other.mean, other.var, other.count)
+ 
+     def update(self, arr: np.ndarray) -> None:
++        if arr.shape[0] == 0:
++            return
+         batch_mean = np.mean(arr, axis=0)
+         batch_var = np.var(arr, axis=0)
+         batch_count = arr.shape[0]
+         self.update_from_moments(batch_mean, batch_var, batch_count)
+ 
+     def update_from_moments(self, batch_mean: np.ndarray, batch_var: np.ndarray, batch_count: float) -> None:
++        if batch_count == 0:
++            return
+         delta = batch_mean - self.mean
+         tot_count = self.count + batch_count
+ 
