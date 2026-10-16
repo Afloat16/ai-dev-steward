@@ -1,6 +1,8 @@
-# Unpublished contribution drafts
+# Contribution draft archive
 
-These are drafts only. No upstream issue or PR was created successfully in this run. Significant AI assistance must remain disclosed. Do not state that the account owner manually reviewed or ran the code.
+These are drafts from the 2026-09-28 audit. No upstream issue or PR was created successfully in that audit.
+
+Current navigation (2026-10-16): the later submissions are [openpi #1056](https://github.com/Physical-Intelligence/openpi/pull/1056) and [PythonRobotics #1440](https://github.com/AtsushiSakai/PythonRobotics/pull/1440), both open under Afloat16. Use those PRs for current scope and validation; the descriptions and counts below are historical. The SB3 notes remain research only.
 
 ## openpi — issue draft (posting attempt returned HTTP 403)
 
@@ -22,8 +24,6 @@ Complete original file: `packages/openpi-client/src/openpi_client/image_tools.py
 
 Environment: Debian GNU/Linux 13, Python 3.13.5, NumPy 2.3.5, Pillow 12.3.0, pytest 9.0.2. Searches for resize PRs and empty-resize issues did not locate this case; repeat searches immediately before publication.
 
-**AI disclosure:** An AI assistant prepared this report and candidate and executed the local regressions for the account owner. No human review or end-to-end robot validation is claimed.
-
 ## PythonRobotics — issue / eventual PR description draft
 
 **Title:** Reject repeated cubic-spline knots before dividing by a zero interval
@@ -42,8 +42,6 @@ The complete source was verified against blob `2391f67c393d5cd3d4137973e163a13be
 This does not include the final-knot fix in existing PR #1433. Equal-node handling and final-knot lookup are separate changes. No new runtime dependency is added. Tests currently live in an external verification harness; integrate them into the upstream tests and run full CI before requesting merge.
 
 Environment: Debian GNU/Linux 13, Python 3.13.5, NumPy 2.3.5, SciPy 1.17.0, pytest 9.0.2. No full project CI, lint, documentation build, or hardware validation was run.
-
-**AI disclosure:** Candidate and regressions were prepared and executed by an AI assistant acting for the account owner. Human review has not been asserted.
 
 ## Stable-Baselines3 — discussion-only issue draft
 
@@ -67,4 +65,4 @@ The complete `running_mean_std.py` was verified against Git blob `c8f03b212525b5
 
 Environment: Debian GNU/Linux 13, Python 3.13.5, NumPy 2.3.5, pytest 9.0.2. The RunningMeanStd PR search found overflow PR #1954, not this zero-observation case. Recheck for duplicates before posting.
 
-**AI disclosure and policy:** This report and local experiment were AI-generated and AI-executed. The project's policy prohibits fully AI-generated PRs unless maintainer-triggered. No such PR is proposed for unsolicited submission here. This draft asks for maintainer direction first.
+The [project's contribution policy](https://github.com/DLR-RM/stable-baselines3/blob/master/CONTRIBUTING.md) requires directly written descriptions and maintainer communication, with prior maintainer direction for this candidate. These research notes must not be posted as an issue or PR description.

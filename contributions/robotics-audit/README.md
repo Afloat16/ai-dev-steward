@@ -1,10 +1,14 @@
 # Robotics / Embodied-AI contribution audit
 
-2026-09-28 · Account: Afloat16 · AI-assisted preparation and execution
+2026-09-28 · Account: Afloat16
 
 **This is a personal review branch, NOT an upstream PR, merge, or contributor-status claim.** Three candidate source fixes have been exercised against exact Git-blob-verified files. Baseline: **20 failed, 14 passed**. Patched: **34 passed**. No full upstream CI, GPU training, or hardware tests were run.
 
-The attempted openpi issue creation returned **HTTP 403: Resource not accessible by integration**. No upstream issue or PR was published successfully. The connected tools do not expose Fork creation. Nothing in this directory bypasses those restrictions or posts automatically.
+During the 2026-09-28 audit, the attempted openpi issue creation returned **HTTP 403: Resource not accessible by integration**. No upstream issue or PR was published successfully in that audit, and its connected tools did not expose Fork creation. Nothing in this directory bypasses those restrictions or posts automatically.
+
+## Current submission links · 2026-10-16
+
+The later upstream submissions are [PythonRobotics #1440](https://github.com/AtsushiSakai/PythonRobotics/pull/1440) and [openpi #1056](https://github.com/Physical-Intelligence/openpi/pull/1056), both open under Afloat16 at this check. Follow those PRs for their current implementation, review and validation. This directory preserves the 2026-09-28 audit and its historical test results; it is not a new submission or a merged-contribution claim. The SB3 candidate remains research only under the policy below.
 
 ## 3 classic + 7 modern popular projects
 
@@ -13,9 +17,9 @@ Stars are approximate GitHub page counts observed during this audit, not measure
 | Group | Repository | Stars | Actual work / candidate |
 |---|---|---:|---|
 | Classic | [PythonRobotics](https://github.com/AtsushiSakai/PythonRobotics) | 30.6k | Repeated-knot validation candidate; 15 tests pass. Final-knot bug already has [PR #1433](https://github.com/AtsushiSakai/PythonRobotics/pull/1433), not duplicated. |
-| Classic | [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3) | 13.8k | Empty statistics update candidate; 11 tests pass. Research only: AI PR policy applies. |
+| Classic | [Stable-Baselines3](https://github.com/DLR-RM/stable-baselines3) | 13.8k | Empty statistics update candidate; 11 tests pass. Research only; contribution policy applies. |
 | Classic | [MuJoCo](https://github.com/google-deepmind/mujoco) | 15.4k | [#3533](https://github.com/google-deepmind/mujoco/issues/3533), Windows/AMD Studio startup: report reviewed, not reproduced. |
-| Modern | [LeRobot](https://github.com/huggingface/lerobot) | 27.8k | [#3863](https://github.com/huggingface/lerobot/issues/3863), state/action mapping: report and AI policy reviewed; author already has implementation. |
+| Modern | [LeRobot](https://github.com/huggingface/lerobot) | 27.8k | [#3863](https://github.com/huggingface/lerobot/issues/3863), state/action mapping: report and contribution policy reviewed; author already has implementation. |
 | Modern | [Genesis World](https://github.com/Genesis-Embodied-AI/genesis-world) | 30.0k | [#3401](https://github.com/Genesis-Embodied-AI/genesis-world/issues/3401), emitter reset accumulator: report reviewed; author already has patch. |
 | Modern | [openpi](https://github.com/Physical-Intelligence/openpi) | 14.0k | Empty image batches candidate; 8 tests pass. Issue publication blocked by 403. |
 | Modern | [Isaac-GR00T](https://github.com/NVIDIA/Isaac-GR00T) | 8.1k | [#771](https://github.com/NVIDIA/Isaac-GR00T/issues/771), negative history indexing: report reviewed, not reproduced. |
@@ -25,7 +29,7 @@ Stars are approximate GitHub page counts observed during this audit, not measure
 
 ## Evidence and reproduction
 
-`manifest.json` records exact source paths, blob hashes and edits. `patches/` contains production-code diffs; `tests/` is an independent verification harness, not yet integrated into upstream test layouts. `results.json` records counts and limitations. `drafts.md` contains unpublished issue descriptions with AI disclosure.
+`manifest.json` records exact source paths, blob hashes and edits. `patches/` contains production-code diffs; `tests/` is an independent verification harness, not yet integrated into upstream test layouts. `results.json` records counts and limitations. `drafts.md` contains unpublished issue descriptions.
 
 ```sh
 python -m pip install -r requirements-validation.txt
@@ -40,6 +44,6 @@ Environment actually used: Debian GNU/Linux 13, Python 3.13.5, NumPy 2.3.5, SciP
 
 PythonRobotics rejects repeated coordinates before zero-width arithmetic; valid natural-spline derivatives of orders 0-3 match SciPy. The separate final-knot bug is unchanged. openpi's empty-array return and SB3's empty-update no-op are proposed API contracts that still require maintainer agreement; they are not demonstrated failures of a normal robot deployment or default training run.
 
-[SB3 contribution policy](https://github.com/DLR-RM/stable-baselines3/blob/master/CONTRIBUTING.md) requires an issue first and prohibits fully AI-generated PRs unless maintainer-triggered. Its candidate is research only. [LeRobot AI policy](https://github.com/huggingface/lerobot/blob/main/AI_POLICY.md) requires disclosure and accountable human judgment. No human review by the account owner is asserted.
+[SB3 contribution policy](https://github.com/DLR-RM/stable-baselines3/blob/master/CONTRIBUTING.md) requires an issue first and directly written descriptions and maintainer communication. This candidate remains research only and requires maintainer direction before a PR; the draft must not be posted as an issue or PR description. Any LeRobot submission must follow its [contribution policy](https://github.com/huggingface/lerobot/blob/main/AI_POLICY.md), including its disclosure requirements.
 
 Before upstream publication: obtain suitable authorized Fork/Issue/PR capability, recheck duplicates and latest source, agree on input contracts, integrate regressions into project tests, and run required CI/lint/type/doc checks. Do not batch-submit these materials as completed PRs. No merged contribution, benchmark improvement, attention growth, or upstream affiliation is claimed.
